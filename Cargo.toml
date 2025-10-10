@@ -3,8 +3,31 @@ name = "rm-reth"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
+[workspace]
+members = [
+    "src/host"
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+[workspace.dependencies]
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
+rustls = "0.23.32"
 serde = { version = "1.0.228", features = ["derive"] }
 thiserror = "2.0.17"
+tokio = { version = "1.47.1", features = ["full"] }
+tokio-rustls = "0.26.4"
+
+[dependencies]
+host = { path = "src/host" }
+
+anyhow = "1.0.100"
+figment = { version = "0.10.19", features = ["yaml"] }
+rustls = "0.23.32"
+serde = { version = "1.0.228", features = ["derive"] }
+thiserror = "2.0.17"
+tokio = { version = "1.47.1", features = ["full"] }
+tokio-rustls = "0.26.4"

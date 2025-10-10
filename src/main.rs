@@ -1,15 +1,12 @@
-use serde::Deserialize;
-use figment::{Figment, providers::{Format, Yaml}};
+use host::api::{HostServer, HostServerConfig};
 
-#[derive(Deserialize)]
-struct Settings {
-    port: usize
-}
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let config = HostServerConfig::from_yaml("example/host_server/config.yml");
 
-fn main() {
-    let config: Settings = Figment::new()
-        .merge(Yaml::file("example/node1/config.yml"))
-        .extract()
-        .unwrap();
-    println!("{}", config.port);
+    let server = HostServer::from_config(config);
+
+    let _ = server.serve().await;
+
+    Ok(())
 }
