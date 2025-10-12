@@ -1,16 +1,11 @@
 [package]
-name = "host"
+name = "types"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-types.workspace = true
-
 thiserror.workspace = true
 anyhow.workspace = true
 serde.workspace = true
-figment.workspace = true
 rustls.workspace = true
-tokio.workspace = true
 tokio-rustls.workspace = true
-phf.workspace = true
