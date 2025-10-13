@@ -14,3 +14,5 @@ rustls.workspace = true
 tokio.workspace = true
 tokio-rustls.workspace = true
 phf.workspace = true
+clap.workspace = true
+clap_derive.workspace = true

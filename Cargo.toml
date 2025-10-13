@@ -6,7 +6,8 @@ edition = "2024"
 [workspace]
 members = [
     "src/host",
-    "src/types"
+    "src/types",
+    "src/node"
 ]
 
 [workspace.package]
@@ -15,6 +16,7 @@ edition = "2024"
 
 [workspace.dependencies]
 host = { path = "src/host" }
+node = { path = "src/node" }
 types = { path = "src/types" }
 
 anyhow = "1.0.100"
@@ -26,9 +28,12 @@ tokio = { version = "1.47.1", features = ["full"] }
 tokio-rustls = "0.26.4"
 num-traits = "0.2.19"
 phf = { version = "0.12", features = ["macros"] }
+clap = { version = "4.5.40", features = ["derive"] }
+clap_derive = "4.5.40"
 
 [dependencies]
 host = { path = "src/host" }
+node = { path = "src/node" }
 types = { path = "src/types" }
 
 anyhow = "1.0.100"
@@ -40,3 +45,5 @@ tokio = { version = "1.47.1", features = ["full"] }
 tokio-rustls = "0.26.4"
 num-traits = "0.2.19"
 phf = { version = "0.12", features = ["macros"] }
+clap = { version = "4.5.40", features = ["derive"] }
+clap_derive = "4.5.40"

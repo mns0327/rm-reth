@@ -1,12 +1,25 @@
-use host::api::{HostServer, HostServerConfig};
+use clap::{Parser, Subcommand};
+
+#[derive(Parser)]
+#[command(name = "rm-reth", about = "rm-reth CLI")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Host server operations
+    Host(host::command::Cli),
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = HostServerConfig::from_yaml("example/host_server/config.yml");
+    let cli = Cli::parse();
 
-    let server = HostServer::from_config(config);
-
-    let _ = server.serve().await;
+    match cli.command {
+        Commands::Host(cmd) => cmd.run().await?
+    }
 
     Ok(())
 }

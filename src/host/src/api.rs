@@ -207,10 +207,10 @@ async fn handle_client(
                 match cmd {
                     Command::Hello => {
                         writer.write_all(b"Hello\n").await?;
-                        continue;
                     }
                     Command::AddPeer => {
                         points.write().await.insert(addr);
+                        writer.write_all(b"Done\n").await?;
                     }
                     Command::Peer => {
                         let bytes = {
@@ -229,7 +229,6 @@ async fn handle_client(
                         writer.write_all(msg.as_bytes()).await?;
                     }
                 }
-                writer.write_all(b"Done\n").await?;
             }
         }
         Err(e) => {
