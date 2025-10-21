@@ -1,7 +1,7 @@
-use clap::{Parser, Subcommand};
-use crate::error::HostApiError;
-use std::path::{Path, PathBuf};
 use crate::api::{HostServer, HostServerConfig};
+use crate::error::HostApiError;
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "host", about = "Host server commands")]
@@ -16,8 +16,8 @@ enum HostCommands {
     Serve {
         /// config.yml path
         #[arg(long)]
-        config: PathBuf
-    }
+        config: PathBuf,
+    },
 }
 
 impl Cli {

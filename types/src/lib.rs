@@ -4,7 +4,8 @@ use std::{
     net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6},
 };
 
-mod error;
+pub mod api;
+pub mod error;
 
 #[inline(always)]
 fn read_u16(buf: &[u8], cursor: &mut usize) -> Result<u16, TypeUtilError> {
@@ -93,6 +94,52 @@ impl P2pPoints {
         }
 
         Ok(Self { v4, v6 })
+    }
+}
+
+#[macro_export]
+macro_rules! null_terminated {
+    ($bytes:expr) => {{
+        const BYTES: &[u8] = $bytes;
+
+        const fn is_null_terminated(b: &[u8]) -> bool {
+            match b {
+                [] => false,
+                _ => b[b.len() - 1] == 0,
+            }
+        }
+
+        if is_null_terminated(BYTES) {
+            BYTES
+        } else {
+            const LEN: usize = {
+                let mut i = 0;
+                while i < BYTES.len() {
+                    i += 1;
+                }
+                i
+            };
+
+            const OUT: [u8; LEN + 1] = {
+                let mut arr = [0u8; LEN + 1];
+                let mut i = 0;
+                while i < LEN {
+                    arr[i] = BYTES[i];
+                    i += 1;
+                }
+                arr
+            };
+
+            &OUT as &[u8]
+        }
+    }};
+}
+
+#[inline]
+pub fn strip_null_terminator(bytes: &[u8]) -> &[u8] {
+    match bytes.last() {
+        Some(&0) => &bytes[..bytes.len() - 1],
+        _ => bytes,
     }
 }
 

@@ -9,3 +9,4 @@ anyhow.workspace = true
 serde.workspace = true
 rustls.workspace = true
 tokio-rustls.workspace = true
+num_enum.workspace = true

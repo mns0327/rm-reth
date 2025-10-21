@@ -5,9 +5,9 @@ edition = "2024"
 
 [workspace]
 members = [
-    "src/host",
-    "src/types",
-    "src/node"
+    "host",
+    "types",
+    "node"
 ]
 
 [workspace.package]
@@ -15,9 +15,9 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace.dependencies]
-host = { path = "src/host" }
-node = { path = "src/node" }
-types = { path = "src/types" }
+host = { path = "host" }
+node = { path = "node" }
+types = { path = "types" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -30,11 +30,13 @@ num-traits = "0.2.19"
 phf = { version = "0.12", features = ["macros"] }
 clap = { version = "4.5.40", features = ["derive"] }
 clap_derive = "4.5.40"
+webpki-roots = "1.0.3"
+num_enum = "0.7.5"
 
 [dependencies]
-host = { path = "src/host" }
-node = { path = "src/node" }
-types = { path = "src/types" }
+host = { path = "host" }
+node = { path = "node" }
+types = { path = "types" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -47,3 +49,4 @@ num-traits = "0.2.19"
 phf = { version = "0.12", features = ["macros"] }
 clap = { version = "4.5.40", features = ["derive"] }
 clap_derive = "4.5.40"
+num_enum = "0.7.5"
