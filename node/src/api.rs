@@ -221,7 +221,7 @@ impl Node {
         let mut buf = vec![0u8; len as usize];
 
         match timeout(Duration::from_secs(5), stream.read_exact(&mut buf)).await {
-            Ok(_) => Ok(P2pPoints::from_bytes(buf)?),
+            Ok(_) => Ok(P2pPoints::from_bytes(&buf)?),
             Err(_) => Err(NodeError::Timeout("no response from host".into())),
         }
     }
@@ -262,9 +262,10 @@ pub async fn handle_client(
             NodeCommand::Peer => {
                 let bytes = {
                     let guard = points.read().await;
-                    guard.to_bytes()
+                    guard.to_bytes()?
                 };
 
+                writer.write_u32(bytes.len() as u32).await?;
                 writer.write_all(&bytes).await?
             }
             NodeCommand::Bye => {

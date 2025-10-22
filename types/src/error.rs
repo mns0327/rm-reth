@@ -4,4 +4,8 @@ pub enum TypeUtilError {
     Io(#[from] std::io::Error),
     #[error("slice error: {0}")]
     SliceError(#[from] std::array::TryFromSliceError),
+    #[error("decode error: {0}")]
+    DecodeError(#[from] bincode::error::DecodeError),
+    #[error("slice error: {0}")]
+    EncodeError(#[from] bincode::error::EncodeError),
 }

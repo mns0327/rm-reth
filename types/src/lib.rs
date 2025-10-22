@@ -1,7 +1,9 @@
+use bincode::config::Configuration;
+use serde::{Deserialize, Serialize};
+
 use crate::error::TypeUtilError;
 use std::{
-    collections::HashSet,
-    net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6},
+    collections::HashSet, marker::PhantomData, net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6}
 };
 
 pub mod api;
@@ -21,79 +23,36 @@ fn read_u32(buf: &[u8], cursor: &mut usize) -> Result<u32, TypeUtilError> {
     Ok(v)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct P2pPoints {
-    pub v4: HashSet<SocketAddrV4>,
-    pub v6: HashSet<SocketAddrV6>,
+    pub peers: HashSet<SocketAddr>,
 }
 
 impl P2pPoints {
     pub fn new() -> Self {
         P2pPoints {
-            v4: HashSet::new(),
-            v6: HashSet::new(),
+            peers: HashSet::new(),
         }
     }
 
     pub fn insert(&mut self, pfx: impl Into<SocketAddr>) {
-        match pfx.into() {
-            SocketAddr::V4(pfx) => self.v4.insert(pfx),
-            SocketAddr::V6(pfx) => self.v6.insert(pfx),
-        };
+        self.peers.insert(pfx.into());
     }
 
-    /// include total size
-    pub fn to_bytes(&self) -> Vec<u8> {
-        let total_len = self.v4.len() * 6 + self.v6.len() * 18 + 8;
-        let mut buf = Vec::with_capacity(total_len + 4);
+    pub fn to_bytes(&self) -> Result<Vec<u8>, TypeUtilError> {
+        let config = bincode::config::standard();
 
-        buf.extend_from_slice(&(total_len as u32).to_be_bytes());
-
-        buf.extend_from_slice(&(self.v4.len() as u32).to_be_bytes());
-        for p in &self.v4 {
-            buf.extend_from_slice(&p.ip().octets());
-            buf.extend_from_slice(&p.port().to_be_bytes());
-        }
-
-        buf.extend_from_slice(&(self.v6.len() as u32).to_be_bytes());
-        for p in &self.v6 {
-            buf.extend_from_slice(&p.ip().octets());
-            buf.extend_from_slice(&p.port().to_be_bytes());
-        }
-        buf
+        let buf = bincode::encode_to_vec(&self.peers, config)?;
+        
+        Ok(buf)
     }
 
-    /// exclude total size
-    pub fn from_bytes(buf: Vec<u8>) -> Result<Self, TypeUtilError> {
-        let mut cursor: usize = 0;
+    pub fn from_bytes(buf: &[u8]) -> Result<Self, TypeUtilError> {
+        let config = bincode::config::standard();
 
-        let v4_len = read_u32(&buf, &mut cursor)?;
-
-        let mut v4 = HashSet::with_capacity(v4_len as usize);
-
-        let mut ip_bytes = [0u8; 4];
-        for _ in 0..v4_len {
-            ip_bytes.copy_from_slice(&buf[cursor..cursor + 4]);
-            let ip = Ipv4Addr::from(ip_bytes);
-            cursor += 4;
-            let port = read_u16(&buf, &mut cursor)?;
-            v4.insert(SocketAddrV4::new(ip, port));
-        }
-
-        let v6_len = read_u32(&buf, &mut cursor)?;
-
-        let mut v6 = HashSet::with_capacity(v6_len as usize);
-
-        let mut ip_bytes = [0u8; 16];
-        for _ in 0..v6_len {
-            ip_bytes.copy_from_slice(&buf[cursor..cursor + 16]);
-            let ip = Ipv6Addr::from(ip_bytes);
-            cursor += 16;
-            let port = read_u16(&buf, &mut cursor)?;
-            v6.insert(SocketAddrV6::new(ip, port, 0, 0));
-        }
-
-        Ok(Self { v4, v6 })
+        let (peers, _len) = bincode::decode_from_slice(buf, config)?;
+        
+        Ok(P2pPoints { peers })
     }
 }
 

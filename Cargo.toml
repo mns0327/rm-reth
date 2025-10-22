@@ -26,7 +26,7 @@ codegen-units = 1
 members = [
     "host",
     "types",
-    "node"
+    "node", "network"
 ]
 
 [workspace.package]
@@ -37,6 +37,7 @@ edition = "2024"
 host = { path = "host" }
 node = { path = "node" }
 types = { path = "types" }
+network = { path = "types" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -53,6 +54,7 @@ webpki-roots = "1.0.3"
 num_enum = "0.7.5"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
+bincode = "2.0.1"
 
 [dependencies]
 host = { path = "host" }

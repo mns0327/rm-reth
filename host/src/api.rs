@@ -74,7 +74,6 @@ impl HostServerConfig {
             .with_addr(SocketAddr::new(config.host, config.port))
             .add_certificate_file(relative_path.join(config.certificate))
             .with_private_key(relative_path.join(config.private_key));
-
         result
     }
 }
@@ -224,9 +223,10 @@ async fn handle_client(
                     HostCommand::Peer => {
                         let bytes = {
                             let guard = points.read().await;
-                            guard.to_bytes()
+                            guard.to_bytes()?
                         };
 
+                        writer.write_u32(bytes.len() as u32).await?;
                         writer.write_all(&bytes).await?
                     }
                     HostCommand::Bye => {
