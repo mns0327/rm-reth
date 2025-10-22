@@ -19,3 +19,4 @@ clap_derive.workspace = true
 phf.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+network.workspace = true

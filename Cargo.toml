@@ -37,7 +37,7 @@ edition = "2024"
 host = { path = "host" }
 node = { path = "node" }
 types = { path = "types" }
-network = { path = "types" }
+network = { path = "network" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -55,11 +55,13 @@ num_enum = "0.7.5"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
 bincode = "2.0.1"
+hex = "0.4.3"
 
 [dependencies]
 host = { path = "host" }
 node = { path = "node" }
 types = { path = "types" }
+network = { path = "network" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -75,3 +77,4 @@ clap_derive = "4.5.40"
 num_enum = "0.7.5"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
+hex.workspace = true

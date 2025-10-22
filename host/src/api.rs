@@ -12,16 +12,14 @@ use std::{
     net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr}, path::{Path, PathBuf}, str::FromStr, sync::Arc
 };
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt, BufReader},
-    net::{TcpListener, TcpStream},
-    sync::RwLock,
+    io::{AsyncReadExt, AsyncWriteExt, BufReader}, net::{TcpListener, TcpStream}, stream, sync::RwLock
 };
 use tokio_rustls::TlsAcceptor;
 use types::{
     P2pPoints,
     api::{ApiErrorFrame, ERRORCODE, HostCommand, NodeCommand},
 };
-
+use network::LoggedStream;
 use crate::error::HostApiError;
 
 #[derive(Deserialize)]
@@ -169,6 +167,8 @@ async fn handle_client(
 ) -> Result<(), HostApiError> {
     match acceptor.accept(stream).await {
         Ok(stream) => {
+            let stream = LoggedStream::new(stream, addr);
+            
             let (reader, mut writer) = tokio::io::split(stream);
             let mut reader = BufReader::new(reader);
 

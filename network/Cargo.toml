@@ -4,3 +4,6 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+tracing.workspace = true
+tokio.workspace = true
+hex.workspace = true

@@ -4,16 +4,16 @@ use figment::{
     Figment,
     providers::{Format, Yaml},
 };
-use rustls;
+use network::LoggedStream;
 use serde::Deserialize;
 use tracing_subscriber::fmt::format::FmtSpan;
 use std::{
     net::{IpAddr, SocketAddr}, path::Path, str::FromStr, sync::Arc, time::Duration
 };
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt, BufReader},
+    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream},
-    sync::RwLock,
+    sync::{RwLock, Mutex},
     time::timeout,
 };
 use tokio_rustls::{
@@ -112,21 +112,20 @@ impl Node {
 
         let points = self.points.clone();
 
-        let mut stream = Node::connect_p2p_host(self.p2p_server_addr, self.trust_all_certs).await?;
+        let stream = Node::connect_p2p_host(self.p2p_server_addr, self.trust_all_certs).await?;
+        let stream = Arc::new(Mutex::new(stream));
 
         let addr = self.addr;
 
         let _handler = tokio::spawn(async move {
             if let Err(e) = async {
-                Node::p2p_add_peer(&mut stream, addr).await?;
+                Node::p2p_add_peer(stream.clone(), addr).await?;
 
-                *points.write().await = Node::p2p_get_peers(&mut stream).await?;
+                *points.write().await = Node::p2p_get_peers(stream.clone()).await?;
 
                 tracing::info!("{:?}", points.read().await);
 
-                stream.write_u8(HostCommand::Bye.as_byte()).await?;
-
-                stream.shutdown().await?;
+                stream.lock().await.write_u8(HostCommand::Bye.as_byte()).await?;
 
                 Ok::<(), NodeError>(())
             }
@@ -169,8 +168,10 @@ impl Node {
     pub async fn connect_p2p_host(
         addr: SocketAddr,
         trust_all_certs: bool,
-    ) -> Result<TlsStream<TcpStream>, NodeError> {
-        let mut stream = connect_with_tls(addr, trust_all_certs).await?;
+    ) -> Result<LoggedStream<TlsStream<TcpStream>>, NodeError> {
+        let stream = connect_with_tls(addr, trust_all_certs).await?;
+
+        let mut stream = LoggedStream::new(stream, addr);
 
         stream.write_u8(HostCommand::Hello.as_byte()).await?;
 
@@ -183,10 +184,14 @@ impl Node {
         }
     }
 
-    pub async fn p2p_add_peer(
-        stream: &mut TlsStream<TcpStream>,
-        addr: SocketAddr,
-    ) -> Result<(), NodeError> {
+    pub async fn p2p_add_peer<S>(
+        stream: Arc<Mutex<S>>,
+        addr: SocketAddr
+    ) -> Result<(), NodeError>
+    where
+        S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
+        let mut stream = stream.lock().await;
         stream.write_u8(HostCommand::AddPeer.as_byte()).await?;
 
         let mut buf = [0u8; 19];
@@ -213,7 +218,12 @@ impl Node {
         }
     }
 
-    pub async fn p2p_get_peers(stream: &mut TlsStream<TcpStream>) -> Result<P2pPoints, NodeError> {
+    pub async fn p2p_get_peers<S>(stream: Arc<Mutex<S>>) -> Result<P2pPoints, NodeError>
+    where
+        S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
+        let mut stream = stream.lock().await;
+
         stream.write_u8(HostCommand::Peer.as_byte()).await?;
 
         let len = stream.read_u32().await?;
