@@ -3,6 +3,25 @@ name = "rm-reth"
 version = "0.1.0"
 edition = "2024"
 
+[profile.dev]
+opt-level = 1
+debug = true
+overflow-checks = true
+lto = false
+panic = "unwind"
+incremental = true
+codegen-units = 16
+
+[profile.release]
+opt-level = "z"
+debug = false
+overflow-checks = false
+lto = "thin"
+panic = "abort"
+incremental = false
+strip = "symbols"
+codegen-units = 1
+
 [workspace]
 members = [
     "host",
@@ -32,6 +51,8 @@ clap = { version = "4.5.40", features = ["derive"] }
 clap_derive = "4.5.40"
 webpki-roots = "1.0.3"
 num_enum = "0.7.5"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
 
 [dependencies]
 host = { path = "host" }
@@ -50,3 +71,5 @@ phf = { version = "0.12", features = ["macros"] }
 clap = { version = "4.5.40", features = ["derive"] }
 clap_derive = "4.5.40"
 num_enum = "0.7.5"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }

@@ -32,7 +32,7 @@ impl Cli {
 
                 let mut node = Node::from_config(config);
 
-                // node.serve().await?;
+                node.init_tracing()?;
                 node.serve().await?;
             }
         }

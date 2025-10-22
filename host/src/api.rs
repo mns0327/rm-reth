@@ -7,10 +7,9 @@ use rustls::{
     pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject},
 };
 use serde::Deserialize;
+use tracing_subscriber::fmt::format::FmtSpan;
 use std::{
-    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
-    path::{Path, PathBuf},
-    sync::Arc,
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr}, path::{Path, PathBuf}, str::FromStr, sync::Arc
 };
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt, BufReader},
@@ -87,6 +86,30 @@ pub struct HostServer {
 }
 
 impl HostServer {
+    pub fn init_tracing(&self) -> Result<(), HostApiError> {
+        #[cfg(debug_assertions)]
+        let level = "debug";
+        #[cfg(not(debug_assertions))]
+        let level = "info";
+
+        let env_level = std::env::var("RUST_LOG").unwrap_or_else(|_| level.to_string());
+
+        if tracing::subscriber::set_global_default(
+            tracing_subscriber::fmt()
+                .with_max_level(tracing::Level::from_str(&env_level).unwrap_or(tracing::Level::INFO))
+                .with_target(true)
+                .with_file(true)
+                .with_line_number(true)
+                .with_thread_names(true)
+                .with_span_events(FmtSpan::NONE)
+                .finish(),
+        ).is_err() {
+            tracing::info!("tracing skipped")
+        }
+
+        Ok(())
+    }
+
     pub fn from_config(config: HostServerConfig) -> Self {
         let HostServerConfig { certs, key, addr } = config;
 
@@ -106,7 +129,7 @@ impl HostServer {
         let listener = TcpListener::bind(self.addr).await?;
         let acceptor = TlsAcceptor::from(self.config.clone());
 
-        println!("Server running on {}", self.addr);
+        tracing::info!("Server running on {}", self.addr);
 
         loop {
             tokio::select! {
@@ -117,20 +140,20 @@ impl HostServer {
                             let points = self.points.clone();
 
                             tokio::spawn(async move {
-                                println!("connected: {}", addr);
+                                tracing::info!("connected: {}", addr);
                                 if let Err(e) = handle_client(acceptor, stream, addr, points).await {
-                                    eprintln!("Client error ({}): {:?}", addr, e);
+                                    tracing::error!("Client error ({}): {:?}", addr, e);
                                 }
                             });
                         },
                         Err(e) => {
-                            eprintln!("Accept error: {:?}", e);
+                            tracing::error!("Accept error: {:?}", e);
                             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                         }
                     }
                 }
                 _ = tokio::signal::ctrl_c() => {
-                    println!("Closing host server...");
+                    tracing::info!("Closing host server...");
                     break;
                 }
             }
@@ -154,7 +177,7 @@ async fn handle_client(
                 let cmd = match reader.read_u8().await {
                     Ok(v) => v,
                     Err(ref e) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
-                        println!("client disconnected");
+                        tracing::info!("client disconnected");
                         break;
                     }
                     Err(e) => return Err(e.into()),
@@ -192,10 +215,10 @@ async fn handle_client(
 
                         if cmd == NodeCommand::Done.as_byte() {
                             points.write().await.insert(new_peer_addr);
-                            println!("peer added: {}", new_peer_addr);
+                            tracing::info!("peer added: {}", new_peer_addr);
                             writer.write_u8(NodeCommand::Done.as_byte()).await?;
                         } else {
-                            eprintln!("peer adding failed");
+                            tracing::error!("peer adding failed");
                         }
                     }
                     HostCommand::Peer => {
@@ -220,7 +243,7 @@ async fn handle_client(
                             let n = reader.read(&mut msg).await?;
 
                             if n == 0 {
-                                println!("Server {} disconnected", addr);
+                                tracing::info!("Server {} disconnected", addr);
                                 break;
                             }
 
@@ -232,7 +255,7 @@ async fn handle_client(
 
                             let buf = frame.to_bytes();
 
-                            eprintln!("client error: \"{}\"", String::from_utf8_lossy(&buf[2..]));
+                            tracing::error!("client error: \"{}\"", String::from_utf8_lossy(&buf[2..]));
 
                             writer.write_all(&buf).await?;
                         } else {
@@ -242,7 +265,7 @@ async fn handle_client(
 
                             reader.read(&mut msg).await?;
 
-                            eprintln!("server error: \"{}\"", String::from_utf8_lossy(&msg));
+                            tracing::error!("server error: \"{}\"", String::from_utf8_lossy(&msg));
 
                             writer.write_u8(HostCommand::Bye.as_byte()).await?;
                             break;
@@ -252,7 +275,7 @@ async fn handle_client(
             }
         }
         Err(e) => {
-            eprintln!("TLS accept error from {}: {:?}", addr, e);
+            tracing::error!("TLS accept error from {}: {:?}", addr, e);
             return Err(HostApiError::ConnectionError(e.to_string()));
         }
     }

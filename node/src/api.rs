@@ -6,11 +6,9 @@ use figment::{
 };
 use rustls;
 use serde::Deserialize;
+use tracing_subscriber::fmt::format::FmtSpan;
 use std::{
-    net::{IpAddr, SocketAddr},
-    path::Path,
-    sync::Arc,
-    time::Duration,
+    net::{IpAddr, SocketAddr}, path::Path, str::FromStr, sync::Arc, time::Duration
 };
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt, BufReader},
@@ -69,6 +67,30 @@ pub struct Node {
 }
 
 impl Node {
+    pub fn init_tracing(&self) -> Result<(), NodeError> {
+        #[cfg(debug_assertions)]
+        let level = "debug";
+        #[cfg(not(debug_assertions))]
+        let level = "info";
+
+        let env_level = std::env::var("RUST_LOG").unwrap_or_else(|_| level.to_string());
+
+        if tracing::subscriber::set_global_default(
+            tracing_subscriber::fmt()
+                .with_max_level(tracing::Level::from_str(&env_level).unwrap_or(tracing::Level::INFO))
+                .with_target(true)
+                .with_file(true)
+                .with_line_number(true)
+                .with_thread_names(true)
+                .with_span_events(FmtSpan::NONE)
+                .finish(),
+        ).is_err() {
+            tracing::info!("tracing skipped")
+        }
+
+        Ok(())
+    }
+
     pub fn from_config(config: NodeConfig) -> Self {
         let NodeConfig {
             addr,
@@ -100,7 +122,7 @@ impl Node {
 
                 *points.write().await = Node::p2p_get_peers(&mut stream).await?;
 
-                println!("{:?}", points.read().await);
+                tracing::info!("{:?}", points.read().await);
 
                 stream.write_u8(HostCommand::Bye.as_byte()).await?;
 
@@ -110,7 +132,7 @@ impl Node {
             }
             .await
             {
-                eprintln!("Node peer update failed ({:?})", e);
+                tracing::error!("Node peer update failed ({:?})", e);
             }
         });
 
@@ -122,20 +144,20 @@ impl Node {
                             let points = self.points.clone();
 
                             tokio::spawn(async move {
-                                println!("connected: {}", addr);
+                                tracing::info!("connected: {}", addr);
                                 if let Err(e) = handle_client(stream, addr, points).await {
-                                    eprintln!("Client error ({}): {:?}", addr, e);
+                                    tracing::error!("Client error ({}): {:?}", addr, e);
                                 }
                             });
                         },
                         Err(e) => {
-                            eprintln!("Accept error: {:?}", e);
+                            tracing::error!("Accept error: {:?}", e);
                             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                         }
                     }
                 }
                 _ = tokio::signal::ctrl_c() => {
-                    println!("Closing node server...");
+                    tracing::info!("Closing node server...");
                     break;
                 }
             }
@@ -217,7 +239,7 @@ pub async fn handle_client(
         let cmd = match reader.read_u8().await {
             Ok(v) => v,
             Err(ref e) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
-                println!("client disconnected");
+                tracing::info!("client disconnected");
                 break;
             }
             Err(e) => return Err(e.into()),
@@ -229,12 +251,12 @@ pub async fn handle_client(
             }
             NodeCommand::AddPeer => {
                 points.write().await.insert(addr);
-                println!("peer added: {}", addr);
+                tracing::info!("peer added: {}", addr);
                 writer.write_u8(HostCommand::Done.as_byte()).await?;
             }
             NodeCommand::CheckPeer => {
                 // TODO: add Verification
-                println!("peer checking requested: {}", addr);
+                tracing::info!("peer checking requested: {}", addr);
                 writer.write_u8(HostCommand::Done.as_byte()).await?;
             }
             NodeCommand::Peer => {
@@ -259,7 +281,7 @@ pub async fn handle_client(
                     let n = reader.read(&mut msg).await?;
 
                     if n == 0 {
-                        println!("Server {} disconnected", addr);
+                        tracing::info!("Server {} disconnected", addr);
                         break;
                     }
 
@@ -271,7 +293,7 @@ pub async fn handle_client(
 
                     let buf = frame.to_bytes();
 
-                    eprintln!("client error: \"{}\"", String::from_utf8_lossy(&buf[2..]));
+                    tracing::error!("client error: \"{}\"", String::from_utf8_lossy(&buf[2..]));
 
                     writer.write_all(&buf).await?;
                 } else {
@@ -281,7 +303,7 @@ pub async fn handle_client(
 
                     reader.read(&mut msg).await?;
 
-                    eprintln!("server error: \"{}\"", String::from_utf8_lossy(&msg));
+                    tracing::error!("server error: \"{}\"", String::from_utf8_lossy(&msg));
 
                     writer.write_u8(HostCommand::Bye.as_byte()).await?;
                     break;
@@ -304,7 +326,7 @@ pub async fn connect_with_tls(
         .with_no_client_auth();
 
     if trust_all_certs {
-        println!("[!] trust_all_certs = true (skipping certificate validation)");
+        tracing::info!("[!] trust_all_certs = true (skipping certificate validation)");
         config
             .dangerous()
             .set_certificate_verifier(Arc::new(NoVerifier));

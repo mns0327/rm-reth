@@ -9,6 +9,7 @@ async fn main() -> anyhow::Result<()> {
             let config = HostServerConfig::from_yaml("example/host_server/config.yml");
             let server = HostServer::from_config(config);
 
+            server.init_tracing()?;
             server.serve().await?;
             Ok::<(), anyhow::Error>(())
         }
@@ -40,6 +41,7 @@ async fn main() -> anyhow::Result<()> {
         if let Err(e) = async {
             let config = NodeConfig::from_yaml("example/node2/config.yml");
             let mut node = Node::from_config(config);
+
 
             node.serve().await?;
             Ok::<(), anyhow::Error>(())
