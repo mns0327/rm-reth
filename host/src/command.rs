@@ -29,8 +29,8 @@ impl Cli {
                 let config = HostServerConfig::from_yaml(config);
 
                 let server = HostServer::from_config(config);
-                
-                server.init_tracing()?;
+
+                common::init_tracing();
                 server.serve().await?;
             }
         }

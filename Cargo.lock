@@ -83,6 +83,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
+name = "async-trait"
+version = "0.1.89"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9035ad2d096bed7955a320ee7e2230574d28fd3c3a0f186cbea1ff3c7eed5dbb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "atomic"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -288,6 +299,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 
 [[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "dunce"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -396,6 +415,7 @@ dependencies = [
  "anyhow",
  "clap",
  "clap_derive",
+ "common",
  "figment",
  "network",
  "phf",
@@ -405,7 +425,6 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "tracing",
- "tracing-subscriber",
  "types",
 ]
 
@@ -555,6 +574,7 @@ dependencies = [
  "anyhow",
  "clap",
  "clap_derive",
+ "common",
  "figment",
  "network",
  "phf",
@@ -812,8 +832,10 @@ name = "rm-reth"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "clap",
  "clap_derive",
+ "common",
  "figment",
  "hex",
  "host",
@@ -1182,11 +1204,13 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bincode",
  "num_enum",
  "rustls",
  "serde",
  "thiserror",
+ "tokio",
  "tokio-rustls",
 ]
 

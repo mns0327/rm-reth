@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 types.workspace = true
 network.workspace = true
+common.workspace = true
 
 thiserror.workspace = true
 anyhow.workspace = true
@@ -18,4 +19,3 @@ phf.workspace = true
 clap.workspace = true
 clap_derive.workspace = true
 tracing.workspace = true
-tracing-subscriber.workspace = true

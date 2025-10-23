@@ -1,26 +1,29 @@
+use crate::error::HostApiError;
 use figment::{
     Figment,
     providers::{Format, Yaml},
 };
+use network::LoggedStream;
 use rustls::{
     ServerConfig,
     pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject},
 };
 use serde::Deserialize;
-use tracing_subscriber::fmt::format::FmtSpan;
 use std::{
-    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr}, path::{Path, PathBuf}, str::FromStr, sync::Arc
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
+    path::{Path, PathBuf},
+    sync::Arc,
 };
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt, BufReader}, net::{TcpListener, TcpStream}, stream, sync::RwLock
+    io::{AsyncReadExt, AsyncWriteExt, BufReader},
+    net::{TcpListener, TcpStream},
+    sync::RwLock,
 };
 use tokio_rustls::TlsAcceptor;
 use types::{
     P2pPoints,
     api::{ApiErrorFrame, ERRORCODE, HostCommand, NodeCommand},
 };
-use network::LoggedStream;
-use crate::error::HostApiError;
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -83,30 +86,6 @@ pub struct HostServer {
 }
 
 impl HostServer {
-    pub fn init_tracing(&self) -> Result<(), HostApiError> {
-        #[cfg(debug_assertions)]
-        let level = "debug";
-        #[cfg(not(debug_assertions))]
-        let level = "info";
-
-        let env_level = std::env::var("RUST_LOG").unwrap_or_else(|_| level.to_string());
-
-        if tracing::subscriber::set_global_default(
-            tracing_subscriber::fmt()
-                .with_max_level(tracing::Level::from_str(&env_level).unwrap_or(tracing::Level::INFO))
-                .with_target(true)
-                .with_file(true)
-                .with_line_number(true)
-                .with_thread_names(true)
-                .with_span_events(FmtSpan::NONE)
-                .finish(),
-        ).is_err() {
-            tracing::info!("tracing skipped")
-        }
-
-        Ok(())
-    }
-
     pub fn from_config(config: HostServerConfig) -> Self {
         let HostServerConfig { certs, key, addr } = config;
 
@@ -168,7 +147,7 @@ async fn handle_client(
     match acceptor.accept(stream).await {
         Ok(stream) => {
             let stream = LoggedStream::new(stream, addr);
-            
+
             let (reader, mut writer) = tokio::io::split(stream);
             let mut reader = BufReader::new(reader);
 
@@ -255,7 +234,10 @@ async fn handle_client(
 
                             let buf = frame.to_bytes();
 
-                            tracing::error!("client error: \"{}\"", String::from_utf8_lossy(&buf[2..]));
+                            tracing::error!(
+                                "client error: \"{}\"",
+                                String::from_utf8_lossy(&buf[2..])
+                            );
 
                             writer.write_all(&buf).await?;
                         } else {

@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 types.workspace = true
+common.workspace = true
 
 thiserror.workspace = true
 anyhow.workspace = true

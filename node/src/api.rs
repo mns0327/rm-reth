@@ -6,14 +6,16 @@ use figment::{
 };
 use network::LoggedStream;
 use serde::Deserialize;
-use tracing_subscriber::fmt::format::FmtSpan;
 use std::{
-    net::{IpAddr, SocketAddr}, path::Path, str::FromStr, sync::Arc, time::Duration
+    net::{IpAddr, SocketAddr},
+    path::Path,
+    sync::Arc,
+    time::Duration,
 };
 use tokio::{
     io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream},
-    sync::{RwLock, Mutex},
+    sync::{Mutex, RwLock},
     time::timeout,
 };
 use tokio_rustls::{
@@ -67,30 +69,6 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn init_tracing(&self) -> Result<(), NodeError> {
-        #[cfg(debug_assertions)]
-        let level = "debug";
-        #[cfg(not(debug_assertions))]
-        let level = "info";
-
-        let env_level = std::env::var("RUST_LOG").unwrap_or_else(|_| level.to_string());
-
-        if tracing::subscriber::set_global_default(
-            tracing_subscriber::fmt()
-                .with_max_level(tracing::Level::from_str(&env_level).unwrap_or(tracing::Level::INFO))
-                .with_target(true)
-                .with_file(true)
-                .with_line_number(true)
-                .with_thread_names(true)
-                .with_span_events(FmtSpan::NONE)
-                .finish(),
-        ).is_err() {
-            tracing::info!("tracing skipped")
-        }
-
-        Ok(())
-    }
-
     pub fn from_config(config: NodeConfig) -> Self {
         let NodeConfig {
             addr,
@@ -125,7 +103,11 @@ impl Node {
 
                 tracing::info!("{:?}", points.read().await);
 
-                stream.lock().await.write_u8(HostCommand::Bye.as_byte()).await?;
+                stream
+                    .lock()
+                    .await
+                    .write_u8(HostCommand::Bye.as_byte())
+                    .await?;
 
                 Ok::<(), NodeError>(())
             }
@@ -184,10 +166,7 @@ impl Node {
         }
     }
 
-    pub async fn p2p_add_peer<S>(
-        stream: Arc<Mutex<S>>,
-        addr: SocketAddr
-    ) -> Result<(), NodeError>
+    pub async fn p2p_add_peer<S>(stream: Arc<Mutex<S>>, addr: SocketAddr) -> Result<(), NodeError>
     where
         S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
     {

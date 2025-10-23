@@ -1,27 +1,11 @@
-use bincode::config::Configuration;
 use serde::{Deserialize, Serialize};
 
 use crate::error::TypeUtilError;
-use std::{
-    collections::HashSet, marker::PhantomData, net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6}
-};
+use std::{collections::HashSet, net::SocketAddr};
 
 pub mod api;
 pub mod error;
-
-#[inline(always)]
-fn read_u16(buf: &[u8], cursor: &mut usize) -> Result<u16, TypeUtilError> {
-    let v = u16::from_be_bytes(buf[*cursor..*cursor + 2].try_into()?);
-    *cursor += 2;
-    Ok(v)
-}
-
-#[inline(always)]
-fn read_u32(buf: &[u8], cursor: &mut usize) -> Result<u32, TypeUtilError> {
-    let v = u32::from_be_bytes(buf[*cursor..*cursor + 4].try_into()?);
-    *cursor += 4;
-    Ok(v)
-}
+pub mod server;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct P2pPoints {
@@ -43,7 +27,7 @@ impl P2pPoints {
         let config = bincode::config::standard();
 
         let buf = bincode::encode_to_vec(&self.peers, config)?;
-        
+
         Ok(buf)
     }
 
@@ -51,7 +35,7 @@ impl P2pPoints {
         let config = bincode::config::standard();
 
         let (peers, _len) = bincode::decode_from_slice(buf, config)?;
-        
+
         Ok(P2pPoints { peers })
     }
 }

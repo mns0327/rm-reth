@@ -26,7 +26,9 @@ codegen-units = 1
 members = [
     "host",
     "types",
-    "node", "network"
+    "node",
+    "network",
+    "common"
 ]
 
 [workspace.package]
@@ -38,6 +40,7 @@ host = { path = "host" }
 node = { path = "node" }
 types = { path = "types" }
 network = { path = "network" }
+common = { path = "common" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -56,12 +59,14 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
 bincode = "2.0.1"
 hex = "0.4.3"
+async-trait = "0.1.89"
 
 [dependencies]
 host = { path = "host" }
 node = { path = "node" }
 types = { path = "types" }
 network = { path = "network" }
+common = { path = "common" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -77,4 +82,5 @@ clap_derive = "4.5.40"
 num_enum = "0.7.5"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
-hex.workspace = true
+hex = "0.4.3"
+async-trait = "0.1.89"

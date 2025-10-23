@@ -5,7 +5,7 @@ use tracing::debug;
 
 pub struct LoggedStream<T> {
     inner: T,
-    addr: SocketAddr, 
+    addr: SocketAddr,
 }
 
 impl<T> LoggedStream<T> {
@@ -54,7 +54,7 @@ impl<T: AsyncWrite + Unpin> AsyncWrite for LoggedStream<T> {
         buf: &[u8],
     ) -> std::task::Poll<std::io::Result<usize>> {
         let poll = std::pin::Pin::new(&mut self.inner).poll_write(cx, buf);
-        
+
         if tracing::enabled!(tracing::Level::DEBUG) {
             if let std::task::Poll::Ready(Ok(n)) = &poll {
                 if *n > 0 {
