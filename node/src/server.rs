@@ -5,7 +5,6 @@ use figment::{
     Figment,
     providers::{Format, Yaml},
 };
-use network::LoggedStream;
 use serde::Deserialize;
 use std::{
     net::{IpAddr, SocketAddr},
@@ -24,7 +23,7 @@ use tokio_rustls::{
     client::TlsStream,
     rustls::{ClientConfig, pki_types::ServerName},
 };
-use types::P2pPoints;
+use types::{stream::Stream, P2pPoints};
 use types::api::{HostCommand, NodeCommand};
 
 #[derive(Deserialize)]
@@ -151,10 +150,10 @@ impl Node {
     pub async fn connect_p2p_host(
         addr: SocketAddr,
         trust_all_certs: bool,
-    ) -> Result<LoggedStream<TlsStream<TcpStream>>, NodeError> {
+    ) -> Result<Stream, NodeError> {
         let stream = connect_with_tls(addr, trust_all_certs).await?;
 
-        let mut stream = LoggedStream::new(stream, addr);
+        let mut stream = Stream::new(stream, addr);
 
         stream.write_u8(HostCommand::Hello.as_byte()).await?;
 

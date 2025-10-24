@@ -8,7 +8,6 @@ use tokio::{
     io::{self, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf},
     net::TcpStream,
 };
-use tokio_rustls::server::TlsStream;
 use tracing::debug;
 
 pub struct Stream {
@@ -47,7 +46,8 @@ impl Stream {
 
 pub enum InnerStream {
     Tcp(TcpStream),
-    Tls(Box<TlsStream<TcpStream>>),
+    ClientTls(Box<tokio_rustls::client::TlsStream<TcpStream>>),
+    ServerTls(Box<tokio_rustls::server::TlsStream<TcpStream>>),
 }
 
 impl Into<InnerStream> for TcpStream {
@@ -57,10 +57,17 @@ impl Into<InnerStream> for TcpStream {
     }
 }
 
-impl Into<InnerStream> for TlsStream<TcpStream> {
+impl Into<InnerStream> for tokio_rustls::server::TlsStream<TcpStream> {
     #[inline]
     fn into(self) -> InnerStream {
-        InnerStream::Tls(Box::new(self))
+        InnerStream::ServerTls(Box::new(self))
+    }
+}
+
+impl Into<InnerStream> for tokio_rustls::client::TlsStream<TcpStream> {
+    #[inline]
+    fn into(self) -> InnerStream {
+        InnerStream::ClientTls(Box::new(self))
     }
 }
 
@@ -72,7 +79,8 @@ impl AsyncRead for Stream {
     ) -> Poll<io::Result<()>> {
         let poll = match &mut self.inner {
             InnerStream::Tcp(s) => Pin::new(s).poll_read(cx, buf),
-            InnerStream::Tls(s) => Pin::new(s.as_mut()).poll_read(cx, buf),
+            InnerStream::ClientTls(s) => Pin::new(s.as_mut()).poll_read(cx, buf),
+            InnerStream::ServerTls(s) => Pin::new(s.as_mut()).poll_read(cx, buf),
         };
 
         if tracing::enabled!(tracing::Level::DEBUG) {
@@ -105,7 +113,8 @@ impl AsyncWrite for Stream {
     ) -> Poll<io::Result<usize>> {
         let poll = match &mut self.inner {
             InnerStream::Tcp(s) => Pin::new(s).poll_write(cx, buf),
-            InnerStream::Tls(s) => Pin::new(s.as_mut()).poll_write(cx, buf),
+            InnerStream::ClientTls(s) => Pin::new(s.as_mut()).poll_write(cx, buf),
+            InnerStream::ServerTls(s) => Pin::new(s.as_mut()).poll_write(cx, buf),
         };
 
         if tracing::enabled!(tracing::Level::DEBUG) {
@@ -128,14 +137,16 @@ impl AsyncWrite for Stream {
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
         match &mut self.inner {
             InnerStream::Tcp(s) => Pin::new(s).poll_flush(cx),
-            InnerStream::Tls(s) => Pin::new(s.as_mut()).poll_flush(cx),
+            InnerStream::ClientTls(s) => Pin::new(s.as_mut()).poll_flush(cx),
+            InnerStream::ServerTls(s) => Pin::new(s.as_mut()).poll_flush(cx),
         }
     }
 
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
         match &mut self.inner {
             InnerStream::Tcp(s) => Pin::new(s).poll_shutdown(cx),
-            InnerStream::Tls(s) => Pin::new(s.as_mut()).poll_shutdown(cx),
+            InnerStream::ClientTls(s) => Pin::new(s.as_mut()).poll_shutdown(cx),
+            InnerStream::ServerTls(s) => Pin::new(s.as_mut()).poll_shutdown(cx),
         }
     }
 }
