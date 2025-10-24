@@ -13,3 +13,5 @@ num_enum.workspace = true
 bincode.workspace = true
 async-trait.workspace = true
 tokio.workspace = true
+tracing.workspace = true
+hex.workspace = true

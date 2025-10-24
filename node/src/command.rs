@@ -1,6 +1,6 @@
 use crate::{
-    api::{Node, NodeConfig},
     error::NodeError,
+    server::{Node, NodeConfig},
 };
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;

@@ -60,27 +60,16 @@ tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
 bincode = "2.0.1"
 hex = "0.4.3"
 async-trait = "0.1.89"
+ambassador = "0.4.2"
 
 [dependencies]
-host = { path = "host" }
-node = { path = "node" }
-types = { path = "types" }
-network = { path = "network" }
-common = { path = "common" }
-
-anyhow = "1.0.100"
-figment = { version = "0.10.19", features = ["yaml"] }
-rustls = "0.23.32"
-serde = { version = "1.0.228", features = ["derive"] }
-thiserror = "2.0.17"
-tokio = { version = "1.47.1", features = ["full"] }
-tokio-rustls = "0.26.4"
-num-traits = "0.2.19"
-phf = { version = "0.12", features = ["macros"] }
-clap = { version = "4.5.40", features = ["derive"] }
-clap_derive = "4.5.40"
-num_enum = "0.7.5"
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
-hex = "0.4.3"
-async-trait = "0.1.89"
+types = { workspace = true }
+host = { workspace = true }
+node = { workspace = true }
+common = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+clap = { workspace = true }

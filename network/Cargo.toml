@@ -7,3 +7,4 @@ edition.workspace = true
 tracing.workspace = true
 tokio.workspace = true
 hex.workspace = true
+ambassador.workspace = true

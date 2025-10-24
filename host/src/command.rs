@@ -1,5 +1,5 @@
-use crate::api::{HostServer, HostServerConfig};
 use crate::error::HostApiError;
+use crate::server::{HostServer, HostServerConfig};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 

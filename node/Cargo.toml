@@ -21,3 +21,4 @@ phf.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 network.workspace = true
+async-trait.workspace = true

@@ -1,334 +1,213 @@
-use crate::cert::NoVerifier;
 use crate::error::NodeError;
-use figment::{
-    Figment,
-    providers::{Format, Yaml},
-};
-use network::LoggedStream;
-use serde::Deserialize;
+use async_trait::async_trait;
 use std::{
-    net::{IpAddr, SocketAddr},
-    path::Path,
-    sync::Arc,
-    time::Duration,
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
+    sync::{Arc, LazyLock},
 };
 use tokio::{
-    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader},
-    net::{TcpListener, TcpStream},
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
     sync::{Mutex, RwLock},
-    time::timeout,
 };
-use tokio_rustls::{
-    TlsConnector,
-    client::TlsStream,
-    rustls::{ClientConfig, pki_types::ServerName},
+use types::{
+    P2pPoints,
+    api::{ApiErrorFrame, ERRORCODE, HostCommand, NodeCommand},
+    server::{Dispatcher, Handler},
+    stream::Stream,
 };
-use types::api::{ApiErrorFrame, HostCommand, NodeCommand};
-use types::{P2pPoints, api::ERRORCODE};
 
-#[derive(Deserialize)]
-pub struct Config {
-    host: IpAddr,
-    port: u16,
-    #[serde(rename = "p2p-server-addr")]
-    p2p_server_addr: SocketAddr,
-    #[serde(rename = "trust-all-certs")]
-    trust_all_certs: bool,
-}
+pub const DISPATCHER: LazyLock<Dispatcher<Arc<RwLock<P2pPoints>>, ApiError, NodeError>> =
+    LazyLock::new(|| {
+        Dispatcher::new()
+            .with_handler(NodeCommand::Hello.as_byte(), ApiHello)
+            .with_handler(NodeCommand::AddPeer.as_byte(), ApiAddPeer)
+            .with_handler(NodeCommand::Peer.as_byte(), ApiPeer)
+            .with_handler(NodeCommand::CheckPeer.as_byte(), ApiCheckPeer)
+            .with_handler(NodeCommand::Done.as_byte(), ApiDone)
+            .with_handler(NodeCommand::Bye.as_byte(), ApiBye)
+    });
 
-pub struct NodeConfig {
-    addr: SocketAddr,
-    p2p_server_addr: SocketAddr,
-    trust_all_certs: bool,
-}
+struct ApiHello;
+struct ApiAddPeer;
+struct ApiPeer;
+struct ApiCheckPeer;
+struct ApiBye;
+struct ApiDone;
+#[derive(Default)]
+pub struct ApiError;
 
-impl NodeConfig {
-    pub fn from_yaml(path: impl AsRef<Path>) -> Self {
-        // let relative_path = path.as_ref().parent().unwrap_or_else(|| Path::new("."));
-
-        let config: Config = Figment::new().merge(Yaml::file(&path)).extract().unwrap();
-
-        NodeConfig {
-            addr: SocketAddr::new(config.host, config.port),
-            p2p_server_addr: config.p2p_server_addr,
-            trust_all_certs: config.trust_all_certs,
-        }
-    }
-}
-
-pub enum Connect {
-    P2PHost(),
-}
-
-pub struct Node {
-    addr: SocketAddr,
-    p2p_server_addr: SocketAddr,
-    trust_all_certs: bool,
-    points: Arc<RwLock<P2pPoints>>,
-    _connection: Option<u8>,
-}
-
-impl Node {
-    pub fn from_config(config: NodeConfig) -> Self {
-        let NodeConfig {
-            addr,
-            p2p_server_addr,
-            trust_all_certs,
-        } = config;
-
-        Self {
-            addr,
-            p2p_server_addr,
-            trust_all_certs,
-            points: Arc::new(RwLock::new(P2pPoints::new())),
-            _connection: None,
-        }
-    }
-
-    pub async fn serve(&mut self) -> Result<(), NodeError> {
-        let listener = TcpListener::bind(&self.addr).await?;
-
-        let points = self.points.clone();
-
-        let stream = Node::connect_p2p_host(self.p2p_server_addr, self.trust_all_certs).await?;
-        let stream = Arc::new(Mutex::new(stream));
-
-        let addr = self.addr;
-
-        let _handler = tokio::spawn(async move {
-            if let Err(e) = async {
-                Node::p2p_add_peer(stream.clone(), addr).await?;
-
-                *points.write().await = Node::p2p_get_peers(stream.clone()).await?;
-
-                tracing::info!("{:?}", points.read().await);
-
-                stream
-                    .lock()
-                    .await
-                    .write_u8(HostCommand::Bye.as_byte())
-                    .await?;
-
-                Ok::<(), NodeError>(())
-            }
-            .await
-            {
-                tracing::error!("Node peer update failed ({:?})", e);
-            }
-        });
-
-        loop {
-            tokio::select! {
-                res = listener.accept() => {
-                    match res {
-                        Ok((stream, addr)) => {
-                            let points = self.points.clone();
-
-                            tokio::spawn(async move {
-                                tracing::info!("connected: {}", addr);
-                                if let Err(e) = handle_client(stream, addr, points).await {
-                                    tracing::error!("Client error ({}): {:?}", addr, e);
-                                }
-                            });
-                        },
-                        Err(e) => {
-                            tracing::error!("Accept error: {:?}", e);
-                            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-                        }
-                    }
-                }
-                _ = tokio::signal::ctrl_c() => {
-                    tracing::info!("Closing node server...");
-                    break;
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    pub async fn connect_p2p_host(
-        addr: SocketAddr,
-        trust_all_certs: bool,
-    ) -> Result<LoggedStream<TlsStream<TcpStream>>, NodeError> {
-        let stream = connect_with_tls(addr, trust_all_certs).await?;
-
-        let mut stream = LoggedStream::new(stream, addr);
-
-        stream.write_u8(HostCommand::Hello.as_byte()).await?;
-
-        match timeout(Duration::from_secs(5), stream.read_u8()).await {
-            Ok(Ok(cmd)) if cmd == NodeCommand::Hello.as_byte() => Ok(stream),
-            Ok(_) => Err(NodeError::ConnectionError(
-                "invalid return from host".into(),
-            )),
-            Err(_) => Err(NodeError::Timeout("no response from host".into())),
-        }
-    }
-
-    pub async fn p2p_add_peer<S>(stream: Arc<Mutex<S>>, addr: SocketAddr) -> Result<(), NodeError>
-    where
-        S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
-    {
+#[async_trait]
+impl Handler<Arc<RwLock<P2pPoints>>, NodeError> for ApiHello {
+    async fn handle(
+        &self,
+        stream: Arc<Mutex<Stream>>,
+        _cmd: u8,
+        _value: Arc<RwLock<P2pPoints>>,
+    ) -> Result<bool, NodeError> {
         let mut stream = stream.lock().await;
-        stream.write_u8(HostCommand::AddPeer.as_byte()).await?;
+
+        stream.write_u8(NodeCommand::Hello.as_byte()).await?;
+
+        Ok(true)
+    }
+}
+
+#[async_trait]
+impl Handler<Arc<RwLock<P2pPoints>>, NodeError> for ApiAddPeer {
+    async fn handle(
+        &self,
+        stream: Arc<Mutex<Stream>>,
+        _cmd: u8,
+        value: Arc<RwLock<P2pPoints>>,
+    ) -> Result<bool, NodeError> {
+        let mut stream = stream.lock().await;
+        let points = value;
 
         let mut buf = [0u8; 19];
 
-        match addr {
-            SocketAddr::V4(addr) => {
-                buf[0..4].copy_from_slice(&addr.ip().octets());
-                buf[4..6].copy_from_slice(&addr.port().to_be_bytes());
-            }
-            SocketAddr::V6(addr) => {
-                buf[0..16].copy_from_slice(&addr.ip().octets());
-                buf[16..18].copy_from_slice(&addr.port().to_be_bytes());
-            }
-        }
+        stream.read(&mut buf).await?;
 
-        stream.write_all(&buf).await?;
-
-        match timeout(Duration::from_secs(5), stream.read_u8()).await {
-            Ok(Ok(cmd)) if cmd == NodeCommand::Done.as_byte() => Ok(()),
-            Ok(_) => Err(NodeError::ConnectionError(
-                "invalid return from host".into(),
-            )),
-            Err(_) => Err(NodeError::Timeout("no response from host".into())),
-        }
-    }
-
-    pub async fn p2p_get_peers<S>(stream: Arc<Mutex<S>>) -> Result<P2pPoints, NodeError>
-    where
-        S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
-    {
-        let mut stream = stream.lock().await;
-
-        stream.write_u8(HostCommand::Peer.as_byte()).await?;
-
-        let len = stream.read_u32().await?;
-
-        let mut buf = vec![0u8; len as usize];
-
-        match timeout(Duration::from_secs(5), stream.read_exact(&mut buf)).await {
-            Ok(_) => Ok(P2pPoints::from_bytes(&buf)?),
-            Err(_) => Err(NodeError::Timeout("no response from host".into())),
-        }
-    }
-}
-
-pub async fn handle_client(
-    stream: TcpStream,
-    addr: SocketAddr,
-    points: Arc<RwLock<P2pPoints>>,
-) -> Result<(), NodeError> {
-    let (reader, mut writer) = tokio::io::split(stream);
-    let mut reader = BufReader::new(reader);
-
-    loop {
-        let cmd = match reader.read_u8().await {
-            Ok(v) => v,
-            Err(ref e) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
-                tracing::info!("client disconnected");
-                break;
-            }
-            Err(e) => return Err(e.into()),
+        let new_peer_addr = if buf[16..18] == [0u8; 2] {
+            let ip = Ipv4Addr::from(<[u8; 4]>::try_from(&buf[0..4]).unwrap());
+            let port = u16::from_be_bytes(<[u8; 2]>::try_from(&buf[4..6]).unwrap());
+            SocketAddr::new(IpAddr::V4(ip), port)
+        } else {
+            let ip = Ipv6Addr::from(<[u8; 16]>::try_from(&buf[0..16]).unwrap());
+            let port = u16::from_be_bytes(<[u8; 2]>::try_from(&buf[16..18]).unwrap());
+            SocketAddr::new(IpAddr::V6(ip), port)
         };
 
-        match NodeCommand::from_byte(cmd) {
-            NodeCommand::Hello => {
-                writer.write_u8(HostCommand::Hello.as_byte()).await?;
-            }
-            NodeCommand::AddPeer => {
-                points.write().await.insert(addr);
-                tracing::info!("peer added: {}", addr);
-                writer.write_u8(HostCommand::Done.as_byte()).await?;
-            }
-            NodeCommand::CheckPeer => {
-                // TODO: add Verification
-                tracing::info!("peer checking requested: {}", addr);
-                writer.write_u8(HostCommand::Done.as_byte()).await?;
-            }
-            NodeCommand::Peer => {
-                let bytes = {
-                    let guard = points.read().await;
-                    guard.to_bytes()?
-                };
+        let mut peer_stream = TcpStream::connect(new_peer_addr).await?;
 
-                writer.write_u32(bytes.len() as u32).await?;
-                writer.write_all(&bytes).await?
-            }
-            NodeCommand::Bye => {
-                writer.write_u8(HostCommand::Bye.as_byte()).await?;
-                break;
-            }
-            NodeCommand::Done => {
-                writer.write_u8(HostCommand::Bye.as_byte()).await?;
-                break;
-            }
-            NodeCommand::Error => {
-                if cmd != ERRORCODE {
-                    let mut msg = [0u8; 127];
-                    let n = reader.read(&mut msg).await?;
+        peer_stream
+            .write_u8(NodeCommand::CheckPeer.as_byte())
+            .await?;
 
-                    if n == 0 {
-                        tracing::info!("Server {} disconnected", addr);
-                        break;
-                    }
+        let cmd = peer_stream.read_u8().await?;
 
-                    let frame = ApiErrorFrame {
-                        len: n as u8,
-                        cmd,
-                        data: &msg,
-                    };
-
-                    let buf = frame.to_bytes();
-
-                    tracing::error!("client error: \"{}\"", String::from_utf8_lossy(&buf[2..]));
-
-                    writer.write_all(&buf).await?;
-                } else {
-                    let n = reader.read_u8().await? as usize;
-
-                    let mut msg = vec![0u8; n];
-
-                    reader.read(&mut msg).await?;
-
-                    tracing::error!("server error: \"{}\"", String::from_utf8_lossy(&msg));
-
-                    writer.write_u8(HostCommand::Bye.as_byte()).await?;
-                    break;
-                }
-            }
+        if cmd == NodeCommand::Done.as_byte() {
+            points.write().await.insert(new_peer_addr);
+            tracing::info!("peer added: {}", new_peer_addr);
+            stream.write_u8(NodeCommand::Done.as_byte()).await?;
+        } else {
+            tracing::error!("peer adding failed");
         }
+
+        Ok(true)
     }
-    Ok(())
 }
 
-pub async fn connect_with_tls(
-    addr: SocketAddr,
-    trust_all_certs: bool,
-) -> Result<TlsStream<TcpStream>, NodeError> {
-    let root_store =
-        rustls::RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
+#[async_trait]
+impl Handler<Arc<RwLock<P2pPoints>>, NodeError> for ApiPeer {
+    async fn handle(
+        &self,
+        stream: Arc<Mutex<Stream>>,
+        _cmd: u8,
+        value: Arc<RwLock<P2pPoints>>,
+    ) -> Result<bool, NodeError> {
+        let mut stream = stream.lock().await;
+        let points = value;
 
-    let mut config = ClientConfig::builder()
-        .with_root_certificates(root_store)
-        .with_no_client_auth();
+        let bytes = {
+            let guard = points.read().await;
+            guard.to_bytes()?
+        };
 
-    if trust_all_certs {
-        tracing::info!("[!] trust_all_certs = true (skipping certificate validation)");
-        config
-            .dangerous()
-            .set_certificate_verifier(Arc::new(NoVerifier));
+        stream.write_u32(bytes.len() as u32).await?;
+        stream.write_all(&bytes).await?;
+
+        Ok(true)
     }
-    let config = Arc::new(config);
+}
 
-    let connector = TlsConnector::from(config);
-    let domain = ServerName::IpAddress(addr.ip().into());
+#[async_trait]
+impl Handler<Arc<RwLock<P2pPoints>>, NodeError> for ApiCheckPeer {
+    async fn handle(
+        &self,
+        stream: Arc<Mutex<Stream>>,
+        _cmd: u8,
+        _value: Arc<RwLock<P2pPoints>>,
+    ) -> Result<bool, NodeError> {
+        let mut stream = stream.lock().await;
 
-    let tcp = TcpStream::connect(addr).await?;
+        // TODO: add Verification
+        tracing::info!("peer checking requested: {}", stream.addr);
+        stream.write_u8(HostCommand::Done.as_byte()).await?;
 
-    let stream = connector.connect(domain, tcp).await?;
+        Ok(true)
+    }
+}
 
-    Ok(stream)
+#[async_trait]
+impl Handler<Arc<RwLock<P2pPoints>>, NodeError> for ApiDone {
+    async fn handle(
+        &self,
+        _stream: Arc<Mutex<Stream>>,
+        _cmd: u8,
+        _value: Arc<RwLock<P2pPoints>>,
+    ) -> Result<bool, NodeError> {
+        Ok(true)
+    }
+}
+
+#[async_trait]
+impl Handler<Arc<RwLock<P2pPoints>>, NodeError> for ApiBye {
+    async fn handle(
+        &self,
+        stream: Arc<Mutex<Stream>>,
+        _cmd: u8,
+        _value: Arc<RwLock<P2pPoints>>,
+    ) -> Result<bool, NodeError> {
+        let mut stream = stream.lock().await;
+
+        stream.write_u8(NodeCommand::Bye.as_byte()).await?;
+
+        Ok(false)
+    }
+}
+
+#[async_trait]
+impl Handler<Arc<RwLock<P2pPoints>>, NodeError> for ApiError {
+    async fn handle(
+        &self,
+        stream: Arc<Mutex<Stream>>,
+        cmd: u8,
+        _value: Arc<RwLock<P2pPoints>>,
+    ) -> Result<bool, NodeError> {
+        let mut stream = stream.lock().await;
+
+        if cmd != ERRORCODE {
+            let mut msg = [0u8; 127];
+            let n = stream.read(&mut msg).await?;
+
+            if n == 0 {
+                tracing::info!("Server {} disconnected", stream.addr);
+                return Ok(false);
+            }
+
+            let frame = ApiErrorFrame {
+                len: n as u8,
+                cmd,
+                data: &msg.as_slice(),
+            };
+
+            let buf = frame.to_bytes();
+
+            tracing::error!("client error: \"{}\"", String::from_utf8_lossy(&buf[2..]));
+
+            stream.write_all(&buf).await?;
+            Ok(false)
+        } else {
+            let n = stream.read_u8().await? as usize;
+
+            let mut msg = vec![0u8; n];
+
+            stream.read(&mut msg).await?;
+
+            tracing::error!("server error: \"{}\"", String::from_utf8_lossy(&msg));
+
+            stream.write_u8(HostCommand::Bye.as_byte()).await?;
+            Ok(false)
+        }
+    }
 }

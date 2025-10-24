@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
+use tokio::io::{AsyncRead, AsyncWrite};
 use tracing::debug;
 
 pub struct LoggedStream<T> {

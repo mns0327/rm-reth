@@ -6,6 +6,7 @@ use std::{collections::HashSet, net::SocketAddr};
 pub mod api;
 pub mod error;
 pub mod server;
+pub mod stream;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct P2pPoints {

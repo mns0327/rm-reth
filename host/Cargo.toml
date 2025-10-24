@@ -19,3 +19,4 @@ phf.workspace = true
 clap.workspace = true
 clap_derive.workspace = true
 tracing.workspace = true
+async-trait.workspace = true
