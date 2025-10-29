@@ -23,8 +23,8 @@ use tokio_rustls::{
     client::TlsStream,
     rustls::{ClientConfig, pki_types::ServerName},
 };
-use types::{stream::Stream, P2pPoints};
 use types::api::{HostCommand, NodeCommand};
+use types::{P2pPoints, stream::Stream};
 
 #[derive(Deserialize)]
 pub struct Config {

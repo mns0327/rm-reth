@@ -1,0 +1,12 @@
+[package]
+name = "transaction"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio.workspace = true
+bincode.workspace = true
+serde.workspace = true
+config.workspace = true
+thiserror.workspace = true
+rand.workspace = true
