@@ -17,7 +17,12 @@ impl TxPool {
 
     pub async fn add_tx(&mut self, tx: Transaction) -> Result<(), TransactionError> {
         match self {
-            Self::Pending(helper) => helper.add_tx(tx).await,
+            Self::Pending(helper) => {
+                if helper.add_tx(tx).await? {
+                    self.finish();
+                }
+                Ok(())
+            }
             _ => Err(TransactionError::TxPoolFinalized),
         }
     }

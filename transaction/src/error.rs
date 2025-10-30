@@ -20,6 +20,9 @@ pub enum TransactionError {
     #[error("TxPool already sealed")]
     TxPoolFinalized,
 
+    #[error("TxPool reached limit")]
+    TxPoolReachedLimit,
+
     #[error("unknown error")]
     Unknown,
 }

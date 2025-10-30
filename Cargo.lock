@@ -199,6 +199,7 @@ dependencies = [
  "sha2",
  "thiserror",
  "tokio",
+ "transaction",
 ]
 
 [[package]]

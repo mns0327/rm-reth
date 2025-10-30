@@ -1,5 +1,6 @@
 use rand::rand_core::OsError;
 use thiserror::Error;
+use transaction::error::TransactionError;
 
 #[derive(Debug, Error)]
 pub enum BlockError {
@@ -14,6 +15,9 @@ pub enum BlockError {
 
     #[error("generating rand error: {0}")]
     OsRandError(#[from] OsError),
+
+    #[error("tx error")]
+    TransactionError(#[from] TransactionError),
 
     #[error("transaction out of size")]
     TxSingleSizeError,

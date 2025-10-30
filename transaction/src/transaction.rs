@@ -16,7 +16,6 @@ impl Transaction {
         self.0.len()
     }
 
-    #[cfg(test)]
     pub fn dummy() -> Self {
         use rand::Rng;
 
@@ -27,13 +26,12 @@ impl Transaction {
         Self(vec![value])
     }
 
-    #[cfg(test)]
     pub fn dummy_size(size: usize) -> Self {
         use rand::RngCore;
 
         let mut rng = rand::rng();
 
-        let mut value = Vec::with_capacity(size);
+        let mut value = vec![0u8; size];
 
         rng.fill_bytes(&mut value);
 

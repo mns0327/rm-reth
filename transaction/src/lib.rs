@@ -5,8 +5,11 @@ pub mod transaction;
 
 #[cfg(test)]
 mod tests {
-    use crate::transaction::Transaction;
+    use std::iter;
+
+    use config::get_config;
     use pool::TxPool;
+    use transaction::Transaction;
 
     use super::*;
 
@@ -26,12 +29,36 @@ mod tests {
 
         match pool {
             TxPool::Ready(pool) => {
-                assert_eq!(
-                    pool,
-                    vec![tx1, tx2, tx3]
-                );
+                assert_eq!(pool, vec![tx1, tx2, tx3]);
             }
             _ => panic!("expected PoolState::Ready after finish()"),
         }
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn test_transitions_pool_reach_limit() {
+        let mut pool = TxPool::new();
+
+        let config = get_config();
+
+        let test_tx_count =
+            (config.tx_max_size - config.min_tx_threshold) / config.single_tx_max_size;
+
+        let test_single_tx_size = (config.tx_max_size - config.min_tx_threshold) / test_tx_count;
+
+        for _ in 0..test_tx_count {
+            pool.add_tx(Transaction::dummy_size(test_single_tx_size))
+                .await
+                .unwrap();
+        }
+
+        pool.add_tx(Transaction::dummy_size(test_tx_count + 1))
+            .await
+            .unwrap();
+
+        assert!(
+            matches!(pool, TxPool::Ready(_)),
+            "expected TxPool::Ready after reaching limit"
+        );
     }
 }

@@ -1,8 +1,9 @@
-use crate::{error::BlockError, linker::Linker, tx::Transaction};
+use crate::{error::BlockError, linker::Linker};
 use bincode::{Decode, Encode};
 use rand::{TryRngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use transaction::{pool::TxPool, transaction::Transaction};
 
 #[derive(Debug)]
 pub struct Block {
@@ -35,6 +36,37 @@ impl Block {
         self.block_hash = hasher.finalize().into();
 
         Ok(())
+    }
+
+    pub async fn add_tx(&mut self, tx: Transaction) -> Result<(), BlockError> {
+        self._inner.data.tx_pool.add_tx(tx).await?;
+
+        Ok(())
+    }
+
+    pub fn finish(&mut self) -> Result<(), BlockError> {
+        self._inner.data.tx_pool.finish();
+        Ok(())
+    }
+
+    #[inline]
+    pub fn meta(&self) -> &BlockMeta {
+        &self._inner.meta
+    }
+
+    #[inline]
+    pub fn meta_mut(&mut self) -> &mut BlockMeta {
+        &mut self._inner.meta
+    }
+
+    #[inline]
+    pub fn data(&self) -> &BlockData {
+        &self._inner.data
+    }
+
+    #[inline]
+    pub fn data_mut(&mut self) -> &mut BlockData {
+        &mut self._inner.data
     }
 }
 
@@ -83,11 +115,13 @@ impl BlockMeta {
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode)]
 pub struct BlockData {
-    txs: Vec<Transaction>,
+    pub tx_pool: TxPool,
 }
 
 impl BlockData {
     pub fn new() -> Self {
-        Self { txs: vec![] }
+        Self {
+            tx_pool: TxPool::new(),
+        }
     }
 }

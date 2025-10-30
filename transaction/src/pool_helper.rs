@@ -34,7 +34,7 @@ impl TxPoolHelper {
         self.pool
     }
 
-    pub async fn add_tx(&mut self, tx: Transaction) -> Result<(), TransactionError> {
+    pub async fn add_tx(&mut self, tx: Transaction) -> Result<bool, TransactionError> {
         let mut gruad = self.tx_size.lock().await;
         let config = get_config();
 
@@ -53,8 +53,9 @@ impl TxPoolHelper {
         gruad.count += 1;
         gruad.size += tx_size;
 
-        drop(gruad);
-        Ok(())
+        let result = (config.tx_max_size - gruad.size) < config.min_tx_threshold;
+
+        Ok(result)
     }
 }
 
