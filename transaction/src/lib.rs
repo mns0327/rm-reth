@@ -5,13 +5,11 @@ pub mod transaction;
 
 #[cfg(test)]
 mod tests {
-    use std::iter;
+    use super::*;
 
     use config::get_config;
     use pool::TxPool;
     use transaction::Transaction;
-
-    use super::*;
 
     #[tokio::test(flavor = "current_thread")]
     async fn test_finish_transitions_pending_to_ready() {
@@ -28,7 +26,7 @@ mod tests {
         pool.finish();
 
         match pool {
-            TxPool::Ready(pool) => {
+            TxPool::Finished(pool) => {
                 assert_eq!(pool, vec![tx1, tx2, tx3]);
             }
             _ => panic!("expected PoolState::Ready after finish()"),
@@ -57,7 +55,7 @@ mod tests {
             .unwrap();
 
         assert!(
-            matches!(pool, TxPool::Ready(_)),
+            matches!(pool, TxPool::Finished(_)),
             "expected TxPool::Ready after reaching limit"
         );
     }

@@ -23,6 +23,6 @@ pub enum TransactionError {
     #[error("TxPool reached limit")]
     TxPoolReachedLimit,
 
-    #[error("unknown error")]
-    Unknown,
+    #[error("unknown error: ({0})")]
+    Unknown(String),
 }

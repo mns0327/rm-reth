@@ -23,7 +23,7 @@ strip = "symbols"
 codegen-units = 1
 
 [workspace]
-members = ["host", "types", "node", "common", "block", "transaction", "config"]
+members = ["host", "types", "node", "common", "block", "transaction", "config", "linker"]
 
 [workspace.package]
 version = "0.1.0"
@@ -37,6 +37,7 @@ common = { path = "common" }
 block = { path = "block" }
 transaction = { path = "transaction" }
 config = { path = "config" }
+linker = { path = "linker" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -57,8 +58,13 @@ bincode = { version = "2.0.1", features = ["serde"] }
 hex = "0.4.3"
 async-trait = "0.1.89"
 ambassador = "0.4.2"
-sha2 = "0.10.9"
 rand = "0.9.2"
+quote = "1.0.41"
+proc-macro2 = "1.0.103"
+syn = { version = "2.0.108", features = ["full"] }
+dashmap = "6.1.0"
+faster-hex = "0.10.0"
+blake3 = "1.8.2"
 
 [dependencies]
 types = { workspace = true }
@@ -75,5 +81,4 @@ thiserror = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 clap = { workspace = true }
-sha2 = { workspace = true }
 rand.workspace = true

@@ -6,3 +6,9 @@ edition.workspace = true
 [dependencies]
 tracing.workspace = true
 tracing-subscriber.workspace = true
+async-trait.workspace = true
+hex.workspace = true
+faster-hex.workspace = true
+blake3.workspace = true
+bincode.workspace = true
+serde.workspace = true

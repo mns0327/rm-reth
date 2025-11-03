@@ -1,22 +1,36 @@
-use crate::{error::BlockError, linker::Linker};
+use std::sync::Arc;
+
+use crate::{error::BlockError, linker::BlockLinker};
 use bincode::{Decode, Encode};
+use common::hash::Hash;
+use linker::{InnerLinkerUtils, Linker, LinkerHolder};
 use rand::{TryRngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use transaction::{pool::TxPool, transaction::Transaction};
 
-#[derive(Debug)]
+pub static BLOCK_HOLDER: LinkerHolder<Hash, Block> = LinkerHolder::new();
+
+#[derive(Debug, Clone)]
 pub struct Block {
-    pub block_hash: [u8; 32],
+    pub block_hash: Hash,
     _inner: BlockInner,
 }
 
 impl Block {
+    #[inline]
     pub fn new(meta: BlockMeta, data: BlockData) -> Self {
         Self {
-            block_hash: [0u8; 32],
+            block_hash: Hash::empty(),
             _inner: BlockInner::new(meta, data),
         }
+    }
+
+    pub fn from_prev_linker(prev_linker: BlockLinker) -> Self {
+        Block::new(BlockMeta::from_prev_linker(prev_linker), BlockData::new())
+    }
+
+    pub fn from_prev_hash(prev_hash: Hash) -> Self {
+        Block::new(BlockMeta::from_prev_hash(prev_hash), BlockData::new())
     }
 
     #[inline]
@@ -30,10 +44,7 @@ impl Block {
     pub fn set_hash(&mut self) -> Result<(), BlockError> {
         let buf = self.encode_inner()?;
 
-        let mut hasher = Sha256::new();
-        hasher.update(buf);
-
-        self.block_hash = hasher.finalize().into();
+        self.block_hash = Hash::hash(&buf);
 
         Ok(())
     }
@@ -44,9 +55,31 @@ impl Block {
         Ok(())
     }
 
-    pub fn finish(&mut self) -> Result<(), BlockError> {
+    pub fn finish(mut self) -> Result<BlockLinker, BlockError> {
+        self.pool_finish();
+
+        self.set_hash()?;
+
+        let hash = self.hash();
+
+        BLOCK_HOLDER.insert(hash, Arc::new(self));
+
+        Ok(Linker::new(hash).into())
+    }
+
+    #[inline]
+    pub fn pool_finish(&mut self) {
         self._inner.data.tx_pool.finish();
-        Ok(())
+    }
+
+    #[inline]
+    pub fn hash(&self) -> Hash {
+        self.block_hash
+    }
+
+    #[inline]
+    pub fn id(&self) -> u64 {
+        self._inner.meta.block_id
     }
 
     #[inline]
@@ -70,7 +103,7 @@ impl Block {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode)]
+#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
 pub struct BlockInner {
     meta: BlockMeta,
     data: BlockData,
@@ -83,20 +116,34 @@ impl BlockInner {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode)]
+#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
 pub struct BlockMeta {
-    block_id: u64,
-    prev_block_meta: Linker<BlockMeta, u64>,
-    extra_data: [u8; 32],
+    pub block_id: u64,
+    pub prev_block: BlockLinker,
+    pub extra_data: [u8; 32],
 }
 
 impl BlockMeta {
     pub fn empty() -> Self {
         Self {
             block_id: 0,
-            prev_block_meta: Linker::empty(),
+            prev_block: Linker::empty().into(),
             extra_data: [0u8; 32],
         }
+    }
+
+    pub fn from_prev_linker(mut prev_linker: BlockLinker) -> Self {
+        prev_linker.drop();
+
+        Self {
+            block_id: 0,
+            prev_block: prev_linker,
+            extra_data: [0u8; 32],
+        }
+    }
+
+    pub fn from_prev_hash(prev_hash: Hash) -> Self {
+        BlockMeta::from_prev_linker(Linker::new(prev_hash).into())
     }
 
     pub fn genesis() -> Result<Self, BlockError> {
@@ -105,7 +152,7 @@ impl BlockMeta {
 
         let result = Self {
             block_id: 0,
-            prev_block_meta: Linker::empty(),
+            prev_block: Linker::empty().into(),
             extra_data,
         };
 
@@ -113,7 +160,7 @@ impl BlockMeta {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode)]
+#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
 pub struct BlockData {
     pub tx_pool: TxPool,
 }

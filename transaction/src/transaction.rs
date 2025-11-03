@@ -1,12 +1,6 @@
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Default)]
-pub struct TxSize {
-    pub count: usize,
-    pub size: usize,
-}
-
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, PartialEq, Clone)]
 pub struct Transaction(pub Vec<u8>);
 

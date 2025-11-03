@@ -5,18 +5,13 @@ use bincode::{
 };
 use config::get_config;
 use serde::{Deserialize, Serialize};
-use tokio::sync::Mutex;
 
-use crate::{
-    error::TransactionError,
-    transaction::{Transaction, TxSize},
-};
+use crate::{error::TransactionError, transaction::Transaction};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TxPoolHelper {
-    #[serde(default)]
-    #[serde(skip_serializing, skip_deserializing)]
-    tx_size: Mutex<TxSize>,
+    pub tx_count: usize,
+    pub pool_size: usize,
     #[serde(default)]
     #[serde(skip_serializing, skip_deserializing)]
     pub pool: Vec<Transaction>,
@@ -25,7 +20,8 @@ pub struct TxPoolHelper {
 impl TxPoolHelper {
     pub fn new() -> Self {
         Self {
-            tx_size: Mutex::new(TxSize::default()),
+            tx_count: 0,
+            pool_size: 0,
             pool: vec![],
         }
     }
@@ -35,7 +31,6 @@ impl TxPoolHelper {
     }
 
     pub async fn add_tx(&mut self, tx: Transaction) -> Result<bool, TransactionError> {
-        let mut gruad = self.tx_size.lock().await;
         let config = get_config();
 
         let tx_size = tx.size();
@@ -44,16 +39,16 @@ impl TxPoolHelper {
             return Err(TransactionError::TxSingleSizeError);
         }
 
-        if gruad.size + tx_size > config.tx_max_size {
+        if self.pool_size + tx_size > config.tx_max_size {
             return Err(TransactionError::TxSizeError);
         }
 
         self.pool.push(tx);
 
-        gruad.count += 1;
-        gruad.size += tx_size;
+        self.tx_count += 1;
+        self.pool_size += tx_size;
 
-        let result = (config.tx_max_size - gruad.size) < config.min_tx_threshold;
+        let result = (config.tx_max_size - self.pool_size) < config.min_tx_threshold;
 
         Ok(result)
     }

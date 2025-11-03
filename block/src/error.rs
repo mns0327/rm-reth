@@ -25,6 +25,6 @@ pub enum BlockError {
     #[error("transaction pool out of size")]
     TxSizeError,
 
-    #[error("unknown error")]
-    Unknown,
+    #[error("unknown error: ({0})")]
+    Unknown(String),
 }

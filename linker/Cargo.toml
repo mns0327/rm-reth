@@ -1,0 +1,9 @@
+[package]
+name = "linker"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+bincode.workspace = true
+dashmap.workspace = true
+serde.workspace = true

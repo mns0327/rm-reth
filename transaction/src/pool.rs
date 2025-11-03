@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{error::TransactionError, pool_helper::TxPoolHelper, transaction::Transaction};
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode)]
+#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone, PartialEq)]
 pub enum TxPool {
     Pending(TxPoolHelper),
-    Ready(Vec<Transaction>),
+    Finished(Vec<Transaction>),
     Invalid,
 }
 
@@ -33,7 +33,7 @@ impl TxPool {
 
             pool.shrink_to_fit();
 
-            *self = Self::Ready(pool);
+            *self = Self::Finished(pool);
         }
     }
 }
