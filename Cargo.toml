@@ -23,7 +23,7 @@ strip = "symbols"
 codegen-units = 1
 
 [workspace]
-members = ["host", "types", "node", "common", "block", "transaction", "config", "linker"]
+members = ["host", "types", "node", "common", "block", "transaction", "config", "linker", "api"]
 
 [workspace.package]
 version = "0.1.0"
@@ -38,6 +38,7 @@ block = { path = "block" }
 transaction = { path = "transaction" }
 config = { path = "config" }
 linker = { path = "linker" }
+api = { path = "api" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }

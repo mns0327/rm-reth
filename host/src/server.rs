@@ -1,5 +1,6 @@
 use crate::api::DISPATCHER;
 use crate::error::HostApiError;
+use api::P2pPoints;
 use figment::{
     Figment,
     providers::{Format, Yaml},
@@ -19,7 +20,6 @@ use tokio::{
     sync::{Mutex, RwLock},
 };
 use tokio_rustls::TlsAcceptor;
-use types::P2pPoints;
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -142,7 +142,7 @@ async fn handle_client(
 ) -> Result<(), HostApiError> {
     match acceptor.accept(stream).await {
         Ok(stream) => {
-            let stream = Arc::new(Mutex::new(types::stream::Stream::new(stream, addr)));
+            let stream = Arc::new(Mutex::new(api::stream::Stream::new(stream, addr)));
 
             DISPATCHER.dispatch_loop(stream, points).await?;
         }

@@ -2,7 +2,6 @@ pub mod block;
 pub mod error;
 pub mod linker;
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

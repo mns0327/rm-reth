@@ -1,35 +1,14 @@
-use std::{
-    ops::{Deref, DerefMut},
-    sync::{Arc, Weak},
-};
+use std::sync::{Arc, Weak};
 
 use crate::{
     block::{BLOCK_HOLDER, Block},
     error::BlockError,
 };
-use bincode::{Decode, Encode};
+
 use common::hash::Hash;
 use linker::{InnerLinkerUtils, Linker};
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
-pub struct BlockLinker(pub Linker<Hash, Block>);
-
-impl Deref for BlockLinker {
-    type Target = Linker<Hash, Block>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for BlockLinker {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
+pub type BlockLinker = Linker<Hash, Block>;
 
 impl InnerLinkerUtils<Hash, Block> for BlockLinker {
     type Error = BlockError;
@@ -49,12 +28,5 @@ impl InnerLinkerUtils<Hash, Block> for BlockLinker {
     #[inline]
     fn drop(&mut self) {
         self.pointer = Weak::new()
-    }
-}
-
-impl Into<BlockLinker> for Linker<Hash, Block> {
-    #[inline]
-    fn into(self) -> BlockLinker {
-        BlockLinker(self)
     }
 }

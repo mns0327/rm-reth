@@ -1,11 +1,12 @@
 use bincode::{Decode, Encode};
 use faster_hex::hex_encode;
 use serde::{Deserialize, Serialize};
-use std::{fmt::{Debug, Display}, ops::Deref};
+use std::{
+    fmt::{Debug, Display},
+    ops::Deref,
+};
 
-#[derive(
-    Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Encode, Decode, Default,
-)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Encode, Decode, Default)]
 pub struct Hash([u8; 32]);
 
 impl Deref for Hash {

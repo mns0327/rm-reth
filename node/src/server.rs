@@ -1,6 +1,11 @@
 use crate::api::DISPATCHER;
 use crate::cert::NoVerifier;
 use crate::error::NodeError;
+use api::{
+    P2pPoints,
+    command::{HostCommand, NodeCommand},
+    stream::Stream,
+};
 use figment::{
     Figment,
     providers::{Format, Yaml},
@@ -23,8 +28,6 @@ use tokio_rustls::{
     client::TlsStream,
     rustls::{ClientConfig, pki_types::ServerName},
 };
-use types::api::{HostCommand, NodeCommand};
-use types::{P2pPoints, stream::Stream};
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -221,7 +224,7 @@ pub async fn handle_client(
     addr: SocketAddr,
     points: Arc<RwLock<P2pPoints>>,
 ) -> Result<(), NodeError> {
-    let stream = Arc::new(Mutex::new(types::stream::Stream::new(stream, addr)));
+    let stream = Arc::new(Mutex::new(api::stream::Stream::new(stream, addr)));
 
     DISPATCHER.dispatch_loop(stream, points).await?;
 

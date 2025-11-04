@@ -2,12 +2,17 @@ use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, PartialEq, Clone)]
-pub struct Transaction(pub Vec<u8>);
+pub struct Transaction {
+    // pub from: Address,
+    // pub to: Address,
+    // pub amount: Uint256,
+    pub data: Vec<u8>,
+}
 
 impl Transaction {
     #[inline]
     pub fn size(&self) -> usize {
-        self.0.len()
+        self.data.len()
     }
 
     pub fn dummy() -> Self {
@@ -17,7 +22,7 @@ impl Transaction {
 
         let value = rng.random::<u8>();
 
-        Self(vec![value])
+        Self { data: vec![value] }
     }
 
     pub fn dummy_size(size: usize) -> Self {
@@ -29,6 +34,6 @@ impl Transaction {
 
         rng.fill_bytes(&mut value);
 
-        Self(value)
+        Self { data: value }
     }
 }

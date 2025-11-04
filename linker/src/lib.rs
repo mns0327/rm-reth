@@ -36,15 +36,6 @@ impl<K, T> Linker<K, T> {
     }
 }
 
-// pub trait LinkerUtils<K, T> {
-// }
-
-// impl<K, T, U> LinkerUtils<K, T> for U
-// where
-//     U: InnerLinkerUtils<K, T> + Deref<Target = Linker<K, T>>,
-// {
-// }
-
 pub trait InnerLinkerUtils<K, T> {
     type Error;
 

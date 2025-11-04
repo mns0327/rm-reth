@@ -10,3 +10,4 @@ serde.workspace = true
 config.workspace = true
 thiserror.workspace = true
 rand.workspace = true
+common.workspace = true
