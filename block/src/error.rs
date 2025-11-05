@@ -7,11 +7,8 @@ pub enum BlockError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
-    #[error("serialization error: {0}")]
-    Serialization(#[from] bincode::error::EncodeError),
-
-    #[error("deserialization error: {0}")]
-    Deserialization(#[from] bincode::error::DecodeError),
+    #[error("SCALE encoding failed: {0}")]
+    ScaleError(#[from] parity_scale_codec::Error),
 
     #[error("generating rand error: {0}")]
     OsRandError(#[from] OsError),

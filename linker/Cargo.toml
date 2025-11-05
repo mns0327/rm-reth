@@ -4,6 +4,6 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-bincode.workspace = true
 dashmap.workspace = true
 serde.workspace = true
+parity-scale-codec.workspace = true

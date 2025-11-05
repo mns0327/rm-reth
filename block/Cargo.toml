@@ -5,7 +5,6 @@ edition.workspace = true
 
 [dependencies]
 serde.workspace = true
-bincode.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 rand.workspace = true
@@ -15,3 +14,4 @@ transaction.workspace = true
 dashmap.workspace = true
 common.workspace = true
 linker.workspace = true
+parity-scale-codec.workspace = true

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{error::BlockError, linker::BlockLinker};
-use bincode::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use common::hash::Hash;
 use linker::{InnerLinkerUtils, Linker, LinkerHolder};
 use rand::{TryRngCore, rngs::OsRng};
@@ -34,15 +34,12 @@ impl Block {
     }
 
     #[inline]
-    pub fn encode_inner(&self) -> Result<Vec<u8>, BlockError> {
-        let config = bincode::config::standard();
-        let buf = bincode::encode_to_vec(&self._inner, config)?;
-
-        Ok(buf)
+    pub fn encode_inner(&self) -> Vec<u8> {
+        self._inner.encode()
     }
 
     pub fn set_hash(&mut self) -> Result<(), BlockError> {
-        let buf = self.encode_inner()?;
+        let buf = self.encode_inner();
 
         self.block_hash = Hash::hash(&buf);
 

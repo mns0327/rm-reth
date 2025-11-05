@@ -1,4 +1,4 @@
-use bincode::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, PartialEq, Clone)]

@@ -1,8 +1,4 @@
-use bincode::{
-    BorrowDecode, Decode, Encode,
-    de::{BorrowDecoder, Decoder},
-    enc::Encoder,
-};
+use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Debug,
@@ -14,9 +10,9 @@ pub mod holder;
 pub use holder::LinkerHolder;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(deny_unknown_fields, bound(deserialize = "H: Deserialize<'de>"))]
-pub struct Linker<H, T> {
-    pub id: H,
+#[serde(deny_unknown_fields, bound(deserialize = "K: Deserialize<'de>"))]
+pub struct Linker<K, T> {
+    pub id: K,
     #[serde(default)]
     #[serde(skip_serializing, skip_deserializing)]
     pub pointer: Weak<T>,
@@ -47,35 +43,17 @@ impl<K, T> Encode for Linker<K, T>
 where
     K: Encode,
 {
-    fn encode<E: Encoder>(&self, encoder: &mut E) -> Result<(), bincode::error::EncodeError> {
-        self.id.encode(encoder)?;
-        Ok(())
+    fn encode_to<U: parity_scale_codec::Output + ?Sized>(&self, dest: &mut U) {
+        self.id.encode_to(dest);
     }
 }
 
-impl<K, T, Cx> Decode<Cx> for Linker<K, T>
-where
-    K: Decode<Cx>,
+impl<K, T> Decode for Linker<K, T>
+where 
+    K: Decode
 {
-    fn decode<D: Decoder<Context = Cx>>(
-        decoder: &mut D,
-    ) -> Result<Self, bincode::error::DecodeError> {
-        let id = K::decode(decoder)?;
-        Ok(Self {
-            id,
-            pointer: Weak::new(),
-        })
-    }
-}
-
-impl<'de, K, T, Cx> BorrowDecode<'de, Cx> for Linker<K, T>
-where
-    K: BorrowDecode<'de, Cx>,
-{
-    fn borrow_decode<D: BorrowDecoder<'de, Context = Cx>>(
-        decoder: &mut D,
-    ) -> Result<Self, bincode::error::DecodeError> {
-        let id = K::borrow_decode(decoder)?;
+    fn decode<I: parity_scale_codec::Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
+        let id = K::decode(input)?;
         Ok(Self {
             id,
             pointer: Weak::new(),

@@ -110,7 +110,7 @@ impl Handler<Arc<RwLock<P2pPoints>>, NodeError> for ApiPeer {
 
         let bytes = {
             let guard = points.read().await;
-            guard.to_bytes()?
+            guard.to_bytes()
         };
 
         stream.write_u32(bytes.len() as u32).await?;

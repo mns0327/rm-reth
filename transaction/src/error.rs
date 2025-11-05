@@ -5,11 +5,8 @@ pub enum TransactionError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
-    #[error("serialization error: {0}")]
-    Serialization(#[from] bincode::error::EncodeError),
-
-    #[error("deserialization error: {0}")]
-    Deserialization(#[from] bincode::error::DecodeError),
+    #[error("SCALE encoding failed: {0}")]
+    ScaleError(#[from] parity_scale_codec::Error),
 
     #[error("transaction out of size")]
     TxSingleSizeError,

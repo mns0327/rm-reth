@@ -10,5 +10,5 @@ async-trait.workspace = true
 hex.workspace = true
 faster-hex.workspace = true
 blake3.workspace = true
-bincode.workspace = true
 serde.workspace = true
+parity-scale-codec.workspace = true

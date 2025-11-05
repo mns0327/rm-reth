@@ -55,7 +55,6 @@ webpki-roots = "1.0.3"
 num_enum = "0.7.5"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
-bincode = { version = "2.0.1", features = ["serde"] }
 hex = "0.4.3"
 async-trait = "0.1.89"
 ambassador = "0.4.2"
@@ -66,6 +65,7 @@ syn = { version = "2.0.108", features = ["full"] }
 dashmap = "6.1.0"
 faster-hex = "0.10.0"
 blake3 = "1.8.2"
+parity-scale-codec = { version = "3.7.5", features = ["derive"] }
 
 [dependencies]
 types = { workspace = true }

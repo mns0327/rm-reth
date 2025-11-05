@@ -1,4 +1,4 @@
-use bincode::{Decode, Encode};
+use parity_scale_codec::{Encode, Decode};
 use faster_hex::hex_encode;
 use serde::{Deserialize, Serialize};
 use std::{

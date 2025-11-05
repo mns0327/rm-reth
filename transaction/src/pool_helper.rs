@@ -1,17 +1,18 @@
-use bincode::{
-    BorrowDecode, Decode, Encode,
-    de::{BorrowDecoder, Decoder},
-    enc::Encoder,
-};
+// use bincode::{
+//     BorrowDecode, Decode, Encode,
+//     de::{BorrowDecoder, Decoder},
+//     enc::Encoder,
+// };
 use config::get_config;
+use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 use crate::{error::TransactionError, transaction::Transaction};
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone, PartialEq)]
 pub struct TxPoolHelper {
-    pub tx_count: usize,
-    pub pool_size: usize,
+    pub tx_count: u64,
+    pub pool_size: u64,
     #[serde(default)]
     #[serde(skip_serializing, skip_deserializing)]
     pub pool: Vec<Transaction>,
@@ -33,7 +34,7 @@ impl TxPoolHelper {
     pub async fn add_tx(&mut self, tx: Transaction) -> Result<bool, TransactionError> {
         let config = get_config();
 
-        let tx_size = tx.size();
+        let tx_size = tx.size() as u64;
 
         if tx_size > config.single_tx_max_size {
             return Err(TransactionError::TxSingleSizeError);
@@ -51,27 +52,5 @@ impl TxPoolHelper {
         let result = (config.tx_max_size - self.pool_size) < config.min_tx_threshold;
 
         Ok(result)
-    }
-}
-
-impl Encode for TxPoolHelper {
-    fn encode<E: Encoder>(&self, _encoder: &mut E) -> Result<(), bincode::error::EncodeError> {
-        Err(bincode::error::EncodeError::Other("TxPool is not ready"))
-    }
-}
-
-impl<Cx> Decode<Cx> for TxPoolHelper {
-    fn decode<D: Decoder<Context = Cx>>(
-        _decoder: &mut D,
-    ) -> Result<Self, bincode::error::DecodeError> {
-        Err(bincode::error::DecodeError::Other("TxPool is not ready"))
-    }
-}
-
-impl<'de, Cx> BorrowDecode<'de, Cx> for TxPoolHelper {
-    fn borrow_decode<D: BorrowDecoder<'de, Context = Cx>>(
-        _decoder: &mut D,
-    ) -> Result<Self, bincode::error::DecodeError> {
-        Err(bincode::error::DecodeError::Other("TxPool is not ready"))
     }
 }
