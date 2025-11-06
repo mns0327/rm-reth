@@ -1,19 +1,23 @@
-
-use std::net::{Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use parity_scale_codec::{Decode, Encode, Output};
 use serde::{Deserialize, Serialize};
+use std::net::{Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 
+#[repr(transparent)]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Copy)]
 pub struct SocketAddrCodec(pub SocketAddr);
 
 impl From<SocketAddr> for SocketAddrCodec {
     #[inline]
-    fn from(a: SocketAddr) -> Self { Self(a) }
+    fn from(a: SocketAddr) -> Self {
+        Self(a)
+    }
 }
 
 impl From<SocketAddrCodec> for SocketAddr {
     #[inline]
-    fn from(w: SocketAddrCodec) -> Self { w.0 }
+    fn from(w: SocketAddrCodec) -> Self {
+        w.0
+    }
 }
 
 impl Encode for SocketAddrCodec {
@@ -46,7 +50,9 @@ impl Encode for SocketAddrCodec {
 
 impl Decode for SocketAddrCodec {
     #[inline]
-    fn decode<I: parity_scale_codec::Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
+    fn decode<I: parity_scale_codec::Input>(
+        input: &mut I,
+    ) -> Result<Self, parity_scale_codec::Error> {
         let tag = input.read_byte()?;
         match tag {
             0 => {
@@ -56,7 +62,7 @@ impl Decode for SocketAddrCodec {
                 input.read(&mut port)?;
                 let addr = SocketAddrV4::new(ip.into(), u16::from_le_bytes(port));
                 Ok(Self(SocketAddr::V4(addr)))
-            },
+            }
             1 => {
                 let mut ip = [0u8; 16];
                 input.read(&mut ip)?;
@@ -73,7 +79,7 @@ impl Decode for SocketAddrCodec {
                     u32::from_le_bytes(scope),
                 );
                 Ok(Self(SocketAddr::V6(addr)))
-            },
+            }
             _ => Err("invalid socket addr tag".into()),
         }
     }

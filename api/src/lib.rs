@@ -7,8 +7,8 @@ use std::collections::BTreeSet;
 pub mod command;
 pub mod error;
 pub mod handler;
-pub mod stream;
 pub mod socket;
+pub mod stream;
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
 pub struct P2pPoints {
@@ -39,8 +39,11 @@ impl P2pPoints {
 mod tests {
     use super::*;
     use parity_scale_codec::{Decode, Encode};
-    use std::{collections::BTreeSet, net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6}};
     use rand::{Rng, seq::SliceRandom};
+    use std::{
+        collections::BTreeSet,
+        net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6},
+    };
 
     fn gen_v4<R: Rng + ?Sized>(rng: &mut R) -> SocketAddr {
         let ip = Ipv4Addr::new(rng.random(), rng.random(), rng.random(), rng.random());
@@ -59,11 +62,19 @@ mod tests {
     }
 
     fn gen_addr<R: Rng + ?Sized>(rng: &mut R) -> SocketAddrCodec {
-        if rng.random::<bool>() { SocketAddrCodec(gen_v4(rng)) } else { SocketAddrCodec(gen_v6(rng)) }
+        if rng.random::<bool>() {
+            SocketAddrCodec(gen_v4(rng))
+        } else {
+            SocketAddrCodec(gen_v6(rng))
+        }
     }
 
     fn gen_set<R: Rng + ?Sized>(rng: &mut R, max_len: usize) -> BTreeSet<SocketAddrCodec> {
-        let len = if max_len == 0 { 0 } else { rng.random::<u64>() as usize % (max_len + 1) };
+        let len = if max_len == 0 {
+            0
+        } else {
+            rng.random::<u64>() as usize % (max_len + 1)
+        };
         let mut set = BTreeSet::new();
         for _ in 0..len {
             set.insert(gen_addr(rng));
@@ -83,7 +94,9 @@ mod tests {
 
         for _ in 0..ITERS {
             let peers = gen_set(&mut rng, MAX_LEN);
-            let original = P2pPoints { peers: peers.clone() };
+            let original = P2pPoints {
+                peers: peers.clone(),
+            };
 
             let bytes = encode_bytes(&original);
             let decoded: P2pPoints = P2pPoints::decode(&mut &bytes[..]).expect("valid decode");
@@ -102,11 +115,15 @@ mod tests {
         let mut items: Vec<SocketAddrCodec> = (0..128).map(|_| gen_addr(&mut rng)).collect();
 
         let mut set_a = BTreeSet::new();
-        for v in &items { set_a.insert(*v); }
+        for v in &items {
+            set_a.insert(*v);
+        }
 
         items.shuffle(&mut rng);
         let mut set_b = BTreeSet::new();
-        for v in &items { set_b.insert(*v); }
+        for v in &items {
+            set_b.insert(*v);
+        }
 
         let a = P2pPoints { peers: set_a };
         let b = P2pPoints { peers: set_b };
@@ -130,11 +147,17 @@ mod tests {
         }
 
         let unique: BTreeSet<_> = v.iter().cloned().collect();
-        let p = P2pPoints { peers: unique.clone() };
+        let p = P2pPoints {
+            peers: unique.clone(),
+        };
 
         let bytes = p.encode();
         let decoded: P2pPoints = P2pPoints::decode(&mut &bytes[..]).expect("decode ok");
-        assert_eq!(decoded.peers.len(), unique.len(), "unique count must be preserved");
+        assert_eq!(
+            decoded.peers.len(),
+            unique.len(),
+            "unique count must be preserved"
+        );
         assert_eq!(decoded.peers, unique, "content must match");
     }
 
@@ -148,7 +171,7 @@ mod tests {
                 let addr = match kind {
                     0 => SocketAddrCodec(gen_v4(&mut rng)),
                     1 => SocketAddrCodec(gen_v6(&mut rng)),
-                    _ => gen_addr(&mut rng)
+                    _ => gen_addr(&mut rng),
                 };
                 set.insert(addr);
             }
@@ -159,17 +182,27 @@ mod tests {
             let case = make_case(kind);
             let enc = case.encode();
             let dec: P2pPoints = P2pPoints::decode(&mut &enc[..]).expect("decode ok");
-            assert_eq!(dec.peers, case.peers, "roundtrip must hold for kind={}", kind);
+            assert_eq!(
+                dec.peers, case.peers,
+                "roundtrip must hold for kind={}",
+                kind
+            );
             assert_eq!(enc, dec.encode(), "deterministic bytes for kind={}", kind);
         }
     }
 
     #[test]
     fn p2p_points_empty_set_roundtrip() {
-        let p = P2pPoints { peers: BTreeSet::new() };
+        let p = P2pPoints {
+            peers: BTreeSet::new(),
+        };
         let enc = p.encode();
         let dec: P2pPoints = P2pPoints::decode(&mut &enc[..]).expect("decode ok");
         assert!(dec.peers.is_empty());
-        assert_eq!(enc, dec.encode(), "encoding must be deterministic for empty set");
+        assert_eq!(
+            enc,
+            dec.encode(),
+            "encoding must be deterministic for empty set"
+        );
     }
 }

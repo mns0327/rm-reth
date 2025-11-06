@@ -49,10 +49,12 @@ where
 }
 
 impl<K, T> Decode for Linker<K, T>
-where 
-    K: Decode
+where
+    K: Decode,
 {
-    fn decode<I: parity_scale_codec::Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
+    fn decode<I: parity_scale_codec::Input>(
+        input: &mut I,
+    ) -> Result<Self, parity_scale_codec::Error> {
         let id = K::decode(input)?;
         Ok(Self {
             id,

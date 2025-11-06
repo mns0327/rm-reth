@@ -1,5 +1,5 @@
-use parity_scale_codec::{Encode, Decode};
 use faster_hex::hex_encode;
+use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Display},

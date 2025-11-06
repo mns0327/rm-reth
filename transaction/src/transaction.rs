@@ -1,11 +1,12 @@
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
+use types::{Address, int::Uint256};
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, PartialEq, Clone)]
 pub struct Transaction {
-    // pub from: Address,
-    // pub to: Address,
-    // pub amount: Uint256,
+    pub from: Address,
+    pub to: Address,
+    pub amount: Uint256,
     pub data: Vec<u8>,
 }
 
@@ -22,7 +23,12 @@ impl Transaction {
 
         let value = rng.random::<u8>();
 
-        Self { data: vec![value] }
+        Self {
+            from: Address::default(),
+            amount: Uint256::default(),
+            to: Address::default(),
+            data: vec![value],
+        }
     }
 
     pub fn dummy_size(size: usize) -> Self {
@@ -30,10 +36,15 @@ impl Transaction {
 
         let mut rng = rand::rng();
 
-        let mut value = vec![0u8; size];
+        let mut data = vec![0u8; size];
 
-        rng.fill_bytes(&mut value);
+        rng.fill_bytes(&mut data);
 
-        Self { data: value }
+        Self {
+            from: Address::default(),
+            amount: Uint256::default(),
+            to: Address::default(),
+            data,
+        }
     }
 }

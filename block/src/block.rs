@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use crate::{error::BlockError, linker::BlockLinker};
-use parity_scale_codec::{Decode, Encode};
 use common::hash::Hash;
 use linker::{InnerLinkerUtils, Linker, LinkerHolder};
+use parity_scale_codec::{Decode, Encode};
 use rand::{TryRngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
 use transaction::{pool::TxPool, transaction::Transaction};

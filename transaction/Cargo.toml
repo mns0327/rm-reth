@@ -11,3 +11,4 @@ thiserror.workspace = true
 rand.workspace = true
 common.workspace = true
 parity-scale-codec.workspace = true
+types.workspace = true

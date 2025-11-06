@@ -1,8 +1,3 @@
-// use bincode::{
-//     BorrowDecode, Decode, Encode,
-//     de::{BorrowDecoder, Decoder},
-//     enc::Encoder,
-// };
 use config::get_config;
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
