@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, vec};
 
 use crate::{error::BlockError, linker::BlockLinker};
 use common::hash::Hash;
@@ -7,6 +7,7 @@ use parity_scale_codec::{Decode, Encode};
 use rand::{TryRngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
 use transaction::{pool::TxPool, transaction::Transaction};
+use types::token::{TOKEN_HOLDER, Token};
 
 pub static BLOCK_HOLDER: LinkerHolder<Hash, Block> = LinkerHolder::new();
 
@@ -160,12 +161,75 @@ impl BlockMeta {
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
 pub struct BlockData {
     pub tx_pool: TxPool,
+    // token holding amount (only contain changed address)
+    pub tokens: Vec<Token>, // TODO: save slot changed
 }
 
 impl BlockData {
     pub fn new() -> Self {
         Self {
             tx_pool: TxPool::new(),
+            tokens: Vec::new(),
         }
+    }
+
+    pub fn finish(&mut self) -> Result<(), BlockError> {
+        self.tx_pool.finish();
+
+        let old_pool = core::mem::replace(&mut self.tx_pool, TxPool::Finished(vec![]));
+
+        let TxPool::Finished(pool) = old_pool else {
+            return Err(BlockError::InvalidState(
+                "tx_pool is not in Finished state".into(),
+            ));
+        };
+
+        let mut new_pool = Vec::with_capacity(pool.len());
+        let mut updated_tokens = Vec::new();
+
+        for t in pool.into_iter() {
+            let mut from_linker = t.from.to_token_linker();
+            from_linker.load()?;
+
+            let mut to_linker = t.to.to_token_linker();
+            to_linker.load()?;
+
+            let (Some(from_token_arc), Some(to_token_arc)) =
+                (from_linker.value(), to_linker.value())
+            else {
+                continue;
+            };
+
+            let mut from_token = (*from_token_arc).clone();
+            let mut to_token = (*to_token_arc).clone();
+
+            if let Some(new_from) = from_token.checked_sub_amount(t.amount.clone()) {
+                from_token = new_from;
+            } else {
+                continue;
+            }
+
+            if let Some(new_to) = to_token.checked_add_amount(t.amount.clone()) {
+                to_token = new_to;
+            } else {
+                continue;
+            }
+
+            TOKEN_HOLDER.insert(from_token.addr.clone(), Arc::new(from_token.clone()));
+            TOKEN_HOLDER.insert(to_token.addr.clone(), Arc::new(to_token.clone()));
+
+            updated_tokens.push(from_token);
+            updated_tokens.push(to_token);
+            new_pool.push(t);
+        }
+
+        self.tx_pool = TxPool::Finished(new_pool);
+        self.tokens = updated_tokens;
+
+        Ok(())
+    }
+
+    pub fn verify(&mut self) -> Result<(), BlockError> {
+        todo!()
     }
 }

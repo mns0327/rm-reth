@@ -4,6 +4,8 @@ use std::{borrow::Borrow, fmt::LowerHex};
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use crate::error::TypeError;
+
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Encode, Decode)]
 pub struct FixedBytes<const N: usize>(pub [u8; N]);
@@ -68,7 +70,8 @@ impl<const N: usize> From<[u8; N]> for FixedBytes<N> {
 }
 
 impl<const N: usize> TryFrom<&[u8]> for FixedBytes<N> {
-    type Error = LengthError;
+    type Error = TypeError;
+
     #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         if s.len() == N {
@@ -76,18 +79,12 @@ impl<const N: usize> TryFrom<&[u8]> for FixedBytes<N> {
             a.copy_from_slice(s);
             Ok(Self(a))
         } else {
-            Err(LengthError {
+            Err(TypeError::LengthError {
                 expected: N,
                 got: s.len(),
             })
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct LengthError {
-    pub expected: usize,
-    pub got: usize,
 }
 
 impl<const N: usize> LowerHex for FixedBytes<N> {

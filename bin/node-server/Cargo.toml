@@ -1,0 +1,11 @@
+[package]
+name = "node-server"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap.workspace = true
+host.workspace = true
+tokio.workspace = true
+node.workspace = true
+anyhow.workspace = true

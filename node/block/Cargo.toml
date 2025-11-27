@@ -15,3 +15,4 @@ dashmap.workspace = true
 common.workspace = true
 linker.workspace = true
 parity-scale-codec.workspace = true
+types.workspace = true

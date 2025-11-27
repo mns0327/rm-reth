@@ -1,0 +1,11 @@
+[package]
+name = "api-server"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+host.workspace = true
+node.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+common.workspace = true

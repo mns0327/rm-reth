@@ -1,5 +1,9 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::{
+    fmt::{Display, Write},
+    ops::{Add, Div, Mul, Sub},
+};
 
+use alloy_primitives::ruint::UintTryFrom;
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
@@ -18,6 +22,14 @@ impl Uint256 {
     #[inline]
     pub fn is_zero(&self) -> bool {
         self.0 == alloy_primitives::U256::ZERO
+    }
+
+    #[inline]
+    pub fn from<T>(value: T) -> Self
+    where
+        alloy_primitives::U256: UintTryFrom<T>,
+    {
+        Uint256(alloy_primitives::U256::from(value))
     }
 
     #[inline]
@@ -168,5 +180,11 @@ impl Decode for Uint256 {
         input.read(&mut buf)?;
 
         Ok(Self(alloy_primitives::U256::from_le_bytes(buf)))
+    }
+}
+
+impl Display for Uint256 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

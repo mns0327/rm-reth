@@ -1,7 +1,4 @@
-[package]
-name = "rm-reth"
-version = "0.1.0"
-edition = "2024"
+
 
 [profile.dev]
 opt-level = 1
@@ -23,22 +20,34 @@ strip = "symbols"
 codegen-units = 1
 
 [workspace]
-members = ["host", "types", "node", "common", "block", "transaction", "config", "linker", "api"]
+members = [
+    "bin/api-server",
+    "node/host",
+    "node/types",
+    "node/node",
+    "node/common",
+    "node/block",
+    "node/transaction",
+    "node/config",
+    "node/linker",
+    "node/api", "bin/node-server",
+]
 
 [workspace.package]
+name = "rm-reth"
 version = "0.1.0"
 edition = "2024"
 
 [workspace.dependencies]
-host = { path = "host" }
-node = { path = "node" }
-types = { path = "types" }
-common = { path = "common" }
-block = { path = "block" }
-transaction = { path = "transaction" }
-config = { path = "config" }
-linker = { path = "linker" }
-api = { path = "api" }
+host = { path = "node/host" }
+node = { path = "node/node" }
+types = { path = "node/types" }
+common = { path = "node/common" }
+block = { path = "node/block" }
+transaction = { path = "node/transaction" }
+config = { path = "node/config" }
+linker = { path = "node/linker" }
+api = { path = "node/api" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -67,21 +76,3 @@ faster-hex = "0.10.0"
 blake3 = "1.8.2"
 parity-scale-codec = { version = "3.7.5", features = ["derive"] }
 alloy-primitives = { version = "1.4.1", features = ["serde"] }
-
-[dependencies]
-types = { workspace = true }
-host = { workspace = true }
-node = { workspace = true }
-common = { workspace = true }
-block = { workspace = true }
-transaction = { workspace = true }
-config = { workspace = true }
-
-tokio = { workspace = true }
-serde = { workspace = true }
-thiserror = { workspace = true }
-anyhow = { workspace = true }
-tracing = { workspace = true }
-clap = { workspace = true }
-rand = { workspace = true }
-

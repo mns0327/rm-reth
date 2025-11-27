@@ -18,7 +18,10 @@ pub struct Linker<K, T> {
     pub pointer: Weak<T>,
 }
 
-impl<K, T> Linker<K, T> {
+impl<K, T> Linker<K, T>
+where
+    Self: InnerLinkerUtils<K, T>,
+{
     #[inline]
     pub fn new(id: K) -> Self {
         Self {
@@ -27,6 +30,7 @@ impl<K, T> Linker<K, T> {
         }
     }
 
+    #[inline]
     pub fn value(&self) -> Option<Arc<T>> {
         self.pointer.upgrade()
     }

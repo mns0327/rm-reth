@@ -7,7 +7,6 @@ use crate::{error::TransactionError, pool_helper::TxPoolHelper, transaction::Tra
 pub enum TxPool {
     Pending(TxPoolHelper),
     Finished(Vec<Transaction>),
-    Invalid,
 }
 
 impl TxPool {
@@ -28,7 +27,11 @@ impl TxPool {
     }
 
     pub fn finish(&mut self) {
-        if let Self::Pending(helper) = std::mem::replace(self, Self::Invalid) {
+        if let Self::Finished(_) = self {
+            return;
+        }
+
+        if let Self::Pending(helper) = std::mem::replace(self, Self::Finished(vec![])) {
             let mut pool = helper.pool();
 
             pool.shrink_to_fit();

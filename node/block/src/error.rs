@@ -16,11 +16,17 @@ pub enum BlockError {
     #[error("tx error")]
     TransactionError(#[from] TransactionError),
 
+    #[error("type error")]
+    TypeError(#[from] types::error::TypeError),
+
     #[error("transaction out of size")]
     TxSingleSizeError,
 
     #[error("transaction pool out of size")]
     TxSizeError,
+
+    #[error("invalid state: ({0})")]
+    InvalidState(String),
 
     #[error("unknown error: ({0})")]
     Unknown(String),

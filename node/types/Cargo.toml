@@ -7,3 +7,5 @@ edition.workspace = true
 serde.workspace = true
 parity-scale-codec.workspace = true
 alloy-primitives.workspace = true
+linker.workspace = true
+thiserror.workspace = true
