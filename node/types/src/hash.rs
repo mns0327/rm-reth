@@ -19,9 +19,8 @@ impl Deref for Hash {
 }
 
 impl Hash {
-    #[inline]
-    pub fn empty() -> Self {
-        [0u8; 32].into()
+    pub const fn empty() -> Self {
+        Hash([0u8; 32])
     }
 
     #[inline]

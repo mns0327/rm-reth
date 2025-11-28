@@ -6,15 +6,15 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Address, error::TypeError, int::Uint256};
 
-pub static TOKEN_HOLDER: LinkerHolder<Address, Token> = LinkerHolder::new();
+pub static TOKEN_HOLDER: LinkerHolder<Address, Balance> = LinkerHolder::new();
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, PartialEq, Clone, Default)]
-pub struct Token {
+pub struct Balance {
     pub addr: Address,
     pub amount: Uint256,
 }
 
-impl Token {
+impl Balance {
     #[inline]
     pub const fn new(addr: Address) -> Self {
         Self {
@@ -40,7 +40,7 @@ impl Token {
     }
 }
 
-pub type TokenLinker = Linker<Address, Token>;
+pub type TokenLinker = Linker<Address, Balance>;
 
 impl From<Address> for TokenLinker {
     #[inline]
@@ -49,14 +49,14 @@ impl From<Address> for TokenLinker {
     }
 }
 
-impl InnerLinkerUtils<Address, Token> for TokenLinker {
+impl InnerLinkerUtils<Address, Balance> for TokenLinker {
     type Error = TypeError;
 
     #[inline]
     fn load(&mut self) -> Result<(), Self::Error> {
         let block = TOKEN_HOLDER
             .entry(self.id)
-            .or_insert(Arc::new(Token::new(self.id)))
+            .or_insert(Arc::new(Balance::new(self.id)))
             .clone();
         self.pointer = Arc::downgrade(&block);
 

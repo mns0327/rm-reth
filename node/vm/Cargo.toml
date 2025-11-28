@@ -1,0 +1,8 @@
+[package]
+name = "execute"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+types.workspace = true
+storage.workspace = true

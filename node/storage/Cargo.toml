@@ -1,0 +1,9 @@
+[package]
+name = "storage"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+types.workspace = true
+dashmap.workspace = true
+once_cell.workspace = true

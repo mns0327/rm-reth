@@ -1,12 +1,14 @@
 use std::{sync::Arc, vec};
 
 use crate::block::{error::BlockError, linker::BlockLinker};
+use crate::tx::{pool::TxPool, transaction::Transaction};
+use crate::{
+    hash::Hash,
+    token::{Balance, TOKEN_HOLDER},
+};
 use linker::{InnerLinkerUtils, Linker, LinkerHolder};
 use parity_scale_codec::{Decode, Encode};
-use rand::{TryRngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
-use crate::tx::{pool::TxPool, transaction::Transaction};
-use crate::{hash::Hash, token::{TOKEN_HOLDER, Token}};
 
 pub static BLOCK_HOLDER: LinkerHolder<Hash, Block> = LinkerHolder::new();
 
@@ -25,12 +27,29 @@ impl Block {
         }
     }
 
-    pub fn from_prev_linker(prev_linker: BlockLinker) -> Self {
-        Block::new(Header::from_prev_linker(prev_linker), BlockData::new())
+    pub fn genesis() -> Self {
+        let header = Header {
+            block_id: 0,
+            prev_block: Hash::empty(),
+            extra_data: [0u8; 32],
+        };
+
+        let data = BlockData {
+            tx_pool: TxPool::Finished(vec![]),
+            tokens: vec![],
+        };
+
+        let block = BlockInner { header, data };
+
+        Self {
+            block_hash: block.get_hash(),
+            _inner: block,
+        }
     }
 
-    pub fn from_prev_hash(prev_hash: Hash) -> Self {
-        Block::new(Header::from_prev_hash(prev_hash), BlockData::new())
+    pub fn set_prev_hash(mut self, prev_hash: Hash) -> Self {
+        self._inner.header.prev_block = prev_hash;
+        self
     }
 
     #[inline]
@@ -38,30 +57,26 @@ impl Block {
         self._inner.encode()
     }
 
-    pub fn set_hash(&mut self) -> Result<(), BlockError> {
-        let buf = self.encode_inner();
-
-        self.block_hash = Hash::hash(&buf);
-
-        Ok(())
+    pub fn set_hash(&mut self) {
+        self.block_hash = self._inner.get_hash();
     }
 
-    pub async fn add_tx(&mut self, tx: Transaction) -> Result<(), BlockError> {
+    pub async fn add_transaction(&mut self, tx: Transaction) -> Result<(), BlockError> {
         self._inner.data.tx_pool.add_tx(tx).await?;
 
         Ok(())
     }
 
-    pub fn finish(mut self) -> Result<BlockLinker, BlockError> {
+    pub fn finish(mut self) -> BlockLinker {
         self.pool_finish();
 
-        self.set_hash()?;
+        self.set_hash();
 
         let hash = self.hash();
 
         BLOCK_HOLDER.insert(hash, Arc::new(self));
 
-        Ok(Linker::new(hash).into())
+        Linker::new(hash).into()
     }
 
     #[inline]
@@ -76,17 +91,17 @@ impl Block {
 
     #[inline]
     pub fn id(&self) -> u64 {
-        self._inner.meta.block_id
+        self._inner.header.block_id
     }
 
     #[inline]
     pub fn meta(&self) -> &Header {
-        &self._inner.meta
+        &self._inner.header
     }
 
     #[inline]
     pub fn meta_mut(&mut self) -> &mut Header {
-        &mut self._inner.meta
+        &mut self._inner.header
     }
 
     #[inline]
@@ -102,21 +117,26 @@ impl Block {
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
 pub struct BlockInner {
-    meta: Header,
+    header: Header,
     data: BlockData,
 }
 
 impl BlockInner {
     #[inline]
-    pub fn new(meta: Header, data: BlockData) -> Self {
-        Self { meta, data }
+    pub fn new(header: Header, data: BlockData) -> Self {
+        Self { header, data }
+    }
+
+    pub fn get_hash(&self) -> Hash {
+        let buf = self.encode();
+        Hash::hash(&buf)
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
-pub struct Header  {
+pub struct Header {
     pub block_id: u64,
-    pub prev_block: BlockLinker,
+    pub prev_block: Hash,
     pub extra_data: [u8; 32],
 }
 
@@ -124,36 +144,9 @@ impl Header {
     pub fn empty() -> Self {
         Self {
             block_id: 0,
-            prev_block: Linker::empty().into(),
+            prev_block: Hash::empty(),
             extra_data: [0u8; 32],
         }
-    }
-
-    pub fn from_prev_linker(mut prev_linker: BlockLinker) -> Self {
-        prev_linker.drop();
-
-        Self {
-            block_id: 0,
-            prev_block: prev_linker,
-            extra_data: [0u8; 32],
-        }
-    }
-
-    pub fn from_prev_hash(prev_hash: Hash) -> Self {
-        Header::from_prev_linker(Linker::new(prev_hash).into())
-    }
-
-    pub fn genesis() -> Result<Self, BlockError> {
-        let mut extra_data = [0u8; 32];
-        OsRng.try_fill_bytes(&mut extra_data)?;
-
-        let result = Self {
-            block_id: 0,
-            prev_block: Linker::empty().into(),
-            extra_data,
-        };
-
-        Ok(result)
     }
 }
 
@@ -161,7 +154,7 @@ impl Header {
 pub struct BlockData {
     pub tx_pool: TxPool,
     // token holding amount (only contain changed address)
-    pub tokens: Vec<Token>, // TODO: save slot changed
+    pub tokens: Vec<Balance>, // TODO: save slot changed
 }
 
 impl BlockData {

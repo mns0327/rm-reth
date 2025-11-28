@@ -29,6 +29,8 @@ members = [
     "node/config",
     "node/linker",
     "node/api",
+    "node/storage",
+    "node/vm",
 ]
 
 [workspace.package]
@@ -43,6 +45,8 @@ types = { path = "node/types" }
 config = { path = "node/config" }
 linker = { path = "node/linker" }
 api = { path = "node/api" }
+storage = { path = "node/storage" }
+vm = { path = "node/vm" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -71,3 +75,4 @@ faster-hex = "0.10.0"
 blake3 = "1.8.2"
 parity-scale-codec = { version = "3.7.5", features = ["derive"] }
 alloy-primitives = { version = "1.4.1", features = ["serde"] }
+once_cell = { version = "1.21.3" }

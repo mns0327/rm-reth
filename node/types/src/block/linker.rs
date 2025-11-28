@@ -1,9 +1,12 @@
 use std::sync::{Arc, Weak};
 
-use crate::{hash::Hash, block::{
-    block::{BLOCK_HOLDER, Block},
-    error::BlockError,
-}};
+use crate::{
+    block::{
+        block::{BLOCK_HOLDER, Block},
+        error::BlockError,
+    },
+    hash::Hash,
+};
 
 use linker::{InnerLinkerUtils, Linker};
 

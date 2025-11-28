@@ -1,6 +1,6 @@
+use crate::tx::error::TransactionError;
 use rand::rand_core::OsError;
 use thiserror::Error;
-use crate::tx::error::TransactionError;
 
 #[derive(Debug, Error)]
 pub enum BlockError {
