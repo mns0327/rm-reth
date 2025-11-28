@@ -4,7 +4,7 @@ use tokio::time::{Duration, sleep};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    common::init_tracing();
+    types::init::init_tracing();
 
     let server_handler = tokio::spawn(async {
         if let Err(e) = async {

@@ -30,7 +30,7 @@ impl Cli {
 
                 let server = HostServer::from_config(config);
 
-                common::init_tracing();
+                types::init::init_tracing();
                 server.serve().await?;
             }
         }

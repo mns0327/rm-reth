@@ -8,4 +8,4 @@ host.workspace = true
 node.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
-common.workspace = true
+types.workspace = true

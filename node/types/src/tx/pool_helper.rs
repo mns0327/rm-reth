@@ -2,7 +2,7 @@ use config::get_config;
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-use crate::{error::TransactionError, transaction::Transaction};
+use crate::tx::{error::TransactionError, transaction::Transaction};
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone, PartialEq)]
 pub struct TxPoolHelper {

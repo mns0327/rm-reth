@@ -1,6 +1,6 @@
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
-use types::{Address, int::Uint256};
+use crate::{Address, int::Uint256};
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, PartialEq, Clone)]
 pub struct Transaction {

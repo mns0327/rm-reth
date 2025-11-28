@@ -1,11 +1,10 @@
 use std::sync::{Arc, Weak};
 
-use crate::{
+use crate::{hash::Hash, block::{
     block::{BLOCK_HOLDER, Block},
     error::BlockError,
-};
+}};
 
-use common::hash::Hash;
 use linker::{InnerLinkerUtils, Linker};
 
 pub type BlockLinker = Linker<Hash, Block>;

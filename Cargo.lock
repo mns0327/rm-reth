@@ -127,10 +127,10 @@ name = "api-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "common",
  "host",
  "node",
  "tokio",
+ "types",
 ]
 
 [[package]]
@@ -473,24 +473,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "block"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "common",
- "config",
- "dashmap",
- "linker",
- "parity-scale-codec",
- "rand 0.9.2",
- "serde",
- "thiserror",
- "tokio",
- "transaction",
- "types",
-]
-
-[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -618,20 +600,6 @@ name = "colorchoice"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
-
-[[package]]
-name = "common"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "blake3",
- "faster-hex",
- "hex",
- "parity-scale-codec",
- "serde",
- "tracing",
- "tracing-subscriber",
-]
 
 [[package]]
 name = "config"
@@ -1113,7 +1081,6 @@ dependencies = [
  "async-trait",
  "clap",
  "clap_derive",
- "common",
  "figment",
  "phf",
  "rustls",
@@ -1328,7 +1295,6 @@ dependencies = [
  "async-trait",
  "clap",
  "clap_derive",
- "common",
  "figment",
  "phf",
  "rustls",
@@ -2351,20 +2317,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "transaction"
-version = "0.1.0"
-dependencies = [
- "common",
- "config",
- "parity-scale-codec",
- "rand 0.9.2",
- "serde",
- "thiserror",
- "tokio",
- "types",
-]
-
-[[package]]
 name = "typenum"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2375,10 +2327,17 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "alloy-primitives",
+ "blake3",
+ "config",
+ "faster-hex",
  "linker",
  "parity-scale-codec",
+ "rand 0.9.2",
  "serde",
  "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

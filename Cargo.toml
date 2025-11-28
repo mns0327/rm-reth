@@ -22,15 +22,13 @@ codegen-units = 1
 [workspace]
 members = [
     "bin/api-server",
+    "bin/node-server",
     "node/host",
     "node/types",
     "node/node",
-    "node/common",
-    "node/block",
-    "node/transaction",
     "node/config",
     "node/linker",
-    "node/api", "bin/node-server",
+    "node/api",
 ]
 
 [workspace.package]
@@ -42,9 +40,6 @@ edition = "2024"
 host = { path = "node/host" }
 node = { path = "node/node" }
 types = { path = "node/types" }
-common = { path = "node/common" }
-block = { path = "node/block" }
-transaction = { path = "node/transaction" }
 config = { path = "node/config" }
 linker = { path = "node/linker" }
 api = { path = "node/api" }

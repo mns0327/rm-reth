@@ -1,13 +1,12 @@
 use std::{sync::Arc, vec};
 
-use crate::{error::BlockError, linker::BlockLinker};
-use common::hash::Hash;
+use crate::block::{error::BlockError, linker::BlockLinker};
 use linker::{InnerLinkerUtils, Linker, LinkerHolder};
 use parity_scale_codec::{Decode, Encode};
 use rand::{TryRngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
-use transaction::{pool::TxPool, transaction::Transaction};
-use types::token::{TOKEN_HOLDER, Token};
+use crate::tx::{pool::TxPool, transaction::Transaction};
+use crate::{hash::Hash, token::{TOKEN_HOLDER, Token}};
 
 pub static BLOCK_HOLDER: LinkerHolder<Hash, Block> = LinkerHolder::new();
 
@@ -19,7 +18,7 @@ pub struct Block {
 
 impl Block {
     #[inline]
-    pub fn new(meta: BlockMeta, data: BlockData) -> Self {
+    pub fn new(meta: Header, data: BlockData) -> Self {
         Self {
             block_hash: Hash::empty(),
             _inner: BlockInner::new(meta, data),
@@ -27,11 +26,11 @@ impl Block {
     }
 
     pub fn from_prev_linker(prev_linker: BlockLinker) -> Self {
-        Block::new(BlockMeta::from_prev_linker(prev_linker), BlockData::new())
+        Block::new(Header::from_prev_linker(prev_linker), BlockData::new())
     }
 
     pub fn from_prev_hash(prev_hash: Hash) -> Self {
-        Block::new(BlockMeta::from_prev_hash(prev_hash), BlockData::new())
+        Block::new(Header::from_prev_hash(prev_hash), BlockData::new())
     }
 
     #[inline]
@@ -81,12 +80,12 @@ impl Block {
     }
 
     #[inline]
-    pub fn meta(&self) -> &BlockMeta {
+    pub fn meta(&self) -> &Header {
         &self._inner.meta
     }
 
     #[inline]
-    pub fn meta_mut(&mut self) -> &mut BlockMeta {
+    pub fn meta_mut(&mut self) -> &mut Header {
         &mut self._inner.meta
     }
 
@@ -103,25 +102,25 @@ impl Block {
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
 pub struct BlockInner {
-    meta: BlockMeta,
+    meta: Header,
     data: BlockData,
 }
 
 impl BlockInner {
     #[inline]
-    pub fn new(meta: BlockMeta, data: BlockData) -> Self {
+    pub fn new(meta: Header, data: BlockData) -> Self {
         Self { meta, data }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
-pub struct BlockMeta {
+pub struct Header  {
     pub block_id: u64,
     pub prev_block: BlockLinker,
     pub extra_data: [u8; 32],
 }
 
-impl BlockMeta {
+impl Header {
     pub fn empty() -> Self {
         Self {
             block_id: 0,
@@ -141,7 +140,7 @@ impl BlockMeta {
     }
 
     pub fn from_prev_hash(prev_hash: Hash) -> Self {
-        BlockMeta::from_prev_linker(Linker::new(prev_hash).into())
+        Header::from_prev_linker(Linker::new(prev_hash).into())
     }
 
     pub fn genesis() -> Result<Self, BlockError> {

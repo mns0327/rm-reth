@@ -1,8 +1,6 @@
 use std::str::FromStr;
 use tracing_subscriber::fmt::format::FmtSpan;
 
-pub mod hash;
-
 pub fn init_tracing() {
     #[cfg(debug_assertions)]
     let level = "debug";

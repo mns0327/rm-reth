@@ -1,7 +1,7 @@
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-use crate::{error::TransactionError, pool_helper::TxPoolHelper, transaction::Transaction};
+use crate::tx::{error::TransactionError, pool_helper::TxPoolHelper, transaction::Transaction};
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone, PartialEq)]
 pub enum TxPool {
