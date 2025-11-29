@@ -12,7 +12,7 @@ enum Commands {
     /// Host server operations
     Host(host::command::Cli),
     /// Node operations
-    Node(node::command::Cli),
+    Node(api_handler::command::Cli),
 }
 
 #[tokio::main]

@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-use storage::tokens::{self, balance_get, balance_upsert};
+use storage::tokens::{balance_get, balance_upsert};
 use types::{Address, int::Uint256, tx::transaction::Transaction};
 
 enum State {

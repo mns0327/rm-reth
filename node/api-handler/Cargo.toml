@@ -1,0 +1,17 @@
+[package]
+name = "api-handler"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+tokio.workspace = true
+types.workspace = true
+tracing.workspace = true
+rustls.workspace = true
+thiserror.workspace = true
+figment.workspace = true
+serde.workspace = true
+tokio-rustls.workspace = true
+webpki-roots.workspace = true
+clap.workspace = true

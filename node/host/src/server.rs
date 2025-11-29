@@ -1,6 +1,5 @@
 use crate::api::DISPATCHER;
 use crate::error::HostApiError;
-use types::api::points::P2pPoints;
 use figment::{
     Figment,
     providers::{Format, Yaml},
@@ -20,6 +19,7 @@ use tokio::{
     sync::{Mutex, RwLock},
 };
 use tokio_rustls::TlsAcceptor;
+use types::api::points::P2pPoints;
 
 #[derive(Deserialize)]
 pub struct Config {

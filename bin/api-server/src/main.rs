@@ -1,5 +1,5 @@
 use host::server::{HostServer, HostServerConfig};
-use node::server::{Node, NodeConfig};
+use api_handler::server::{Node, NodeConfig};
 use tokio::time::{Duration, sleep};
 
 #[tokio::main]

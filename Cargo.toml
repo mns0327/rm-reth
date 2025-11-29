@@ -30,6 +30,7 @@ members = [
     "node/linker",
     "node/storage",
     "node/vm",
+    "node/api-handler",
 ]
 
 [workspace.package]
@@ -45,6 +46,7 @@ config = { path = "node/config" }
 linker = { path = "node/linker" }
 storage = { path = "node/storage" }
 vm = { path = "node/vm" }
+api-handler = { path = "node/api-handler" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }

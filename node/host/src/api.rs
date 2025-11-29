@@ -1,10 +1,4 @@
 use crate::error::HostApiError;
-use types::api::{
-    points::P2pPoints,
-    command::{ApiErrorFrame, ERRORCODE, HostCommand, NodeCommand},
-    handler::{Dispatcher, Handler},
-    stream::Stream,
-};
 use async_trait::async_trait;
 use std::{
     net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
@@ -14,6 +8,12 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
     sync::{Mutex, RwLock},
+};
+use types::api::{
+    command::{ApiErrorFrame, ERRORCODE, HostCommand, NodeCommand},
+    handler::{Dispatcher, Handler},
+    points::P2pPoints,
+    stream::Stream,
 };
 
 pub const DISPATCHER: LazyLock<Dispatcher<Arc<RwLock<P2pPoints>>, ApiError, HostApiError>> =

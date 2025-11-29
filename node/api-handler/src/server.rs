@@ -1,11 +1,6 @@
 use crate::api::DISPATCHER;
 use crate::cert::NoVerifier;
 use crate::error::NodeError;
-use types::api::{
-    points::P2pPoints,
-    command::{HostCommand, NodeCommand},
-    stream::Stream,
-};
 use figment::{
     Figment,
     providers::{Format, Yaml},
@@ -27,6 +22,11 @@ use tokio_rustls::{
     TlsConnector,
     client::TlsStream,
     rustls::{ClientConfig, pki_types::ServerName},
+};
+use types::api::{
+    command::{HostCommand, NodeCommand},
+    points::P2pPoints,
+    stream::Stream,
 };
 
 #[derive(Deserialize)]
@@ -102,7 +102,9 @@ impl Node {
             if let Err(e) = async {
                 Node::p2p_add_peer(stream.clone(), addr).await?;
 
-                *points.write().await = Node::p2p_get_peers(stream.clone()).await?.expect("pears update failed");
+                *points.write().await = Node::p2p_get_peers(stream.clone())
+                    .await?
+                    .expect("pears update failed");
 
                 tracing::info!("{:?}", points.read().await);
 

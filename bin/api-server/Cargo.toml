@@ -5,7 +5,7 @@ edition.workspace = true
 
 [dependencies]
 host.workspace = true
-node.workspace = true
+api-handler.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 types.workspace = true

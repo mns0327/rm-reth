@@ -9,3 +9,4 @@ host.workspace = true
 tokio.workspace = true
 node.workspace = true
 anyhow.workspace = true
+api-handler.workspace = true
