@@ -1,3 +1,4 @@
+pub mod api;
 pub mod block;
 pub mod bytes;
 pub mod error;

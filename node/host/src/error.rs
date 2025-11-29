@@ -4,6 +4,4 @@ pub enum HostApiError {
     Io(#[from] std::io::Error),
     #[error("connection error: {0}")]
     ConnectionError(String),
-    #[error("api error: {0}")]
-    ApiError(#[from] api::error::ApiError),
 }

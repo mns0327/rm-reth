@@ -1,8 +1,8 @@
 use crate::api::DISPATCHER;
 use crate::cert::NoVerifier;
 use crate::error::NodeError;
-use api::{
-    P2pPoints,
+use types::api::{
+    points::P2pPoints,
     command::{HostCommand, NodeCommand},
     stream::Stream,
 };
@@ -102,7 +102,7 @@ impl Node {
             if let Err(e) = async {
                 Node::p2p_add_peer(stream.clone(), addr).await?;
 
-                *points.write().await = Node::p2p_get_peers(stream.clone()).await?;
+                *points.write().await = Node::p2p_get_peers(stream.clone()).await?.expect("pears update failed");
 
                 tracing::info!("{:?}", points.read().await);
 
@@ -200,7 +200,7 @@ impl Node {
         }
     }
 
-    pub async fn p2p_get_peers<S>(stream: Arc<Mutex<S>>) -> Result<P2pPoints, NodeError>
+    pub async fn p2p_get_peers<S>(stream: Arc<Mutex<S>>) -> Result<Option<P2pPoints>, NodeError>
     where
         S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
     {
@@ -213,7 +213,7 @@ impl Node {
         let mut buf = vec![0u8; len as usize];
 
         match timeout(Duration::from_secs(5), stream.read_exact(&mut buf)).await {
-            Ok(_) => Ok(P2pPoints::from_bytes(buf)?),
+            Ok(_) => Ok(P2pPoints::from_bytes(buf)),
             Err(_) => Err(NodeError::Timeout("no response from host".into())),
         }
     }
@@ -224,7 +224,7 @@ pub async fn handle_client(
     addr: SocketAddr,
     points: Arc<RwLock<P2pPoints>>,
 ) -> Result<(), NodeError> {
-    let stream = Arc::new(Mutex::new(api::stream::Stream::new(stream, addr)));
+    let stream = Arc::new(Mutex::new(types::api::stream::Stream::new(stream, addr)));
 
     DISPATCHER.dispatch_loop(stream, points).await?;
 

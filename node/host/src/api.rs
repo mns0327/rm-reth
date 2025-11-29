@@ -1,6 +1,6 @@
 use crate::error::HostApiError;
-use api::{
-    P2pPoints,
+use types::api::{
+    points::P2pPoints,
     command::{ApiErrorFrame, ERRORCODE, HostCommand, NodeCommand},
     handler::{Dispatcher, Handler},
     stream::Stream,

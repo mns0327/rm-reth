@@ -8,6 +8,4 @@ pub enum NodeError {
     ConnectionError(String),
     #[error("timeout: {0}")]
     Timeout(String),
-    #[error("api error: {0}")]
-    ApiError(#[from] api::error::ApiError),
 }

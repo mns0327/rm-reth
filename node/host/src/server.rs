@@ -1,6 +1,6 @@
 use crate::api::DISPATCHER;
 use crate::error::HostApiError;
-use api::P2pPoints;
+use types::api::points::P2pPoints;
 use figment::{
     Figment,
     providers::{Format, Yaml},
@@ -142,7 +142,7 @@ async fn handle_client(
 ) -> Result<(), HostApiError> {
     match acceptor.accept(stream).await {
         Ok(stream) => {
-            let stream = Arc::new(Mutex::new(api::stream::Stream::new(stream, addr)));
+            let stream = Arc::new(Mutex::new(types::api::stream::Stream::new(stream, addr)));
 
             DISPATCHER.dispatch_loop(stream, points).await?;
         }

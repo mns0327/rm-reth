@@ -28,7 +28,6 @@ members = [
     "node/node",
     "node/config",
     "node/linker",
-    "node/api",
     "node/storage",
     "node/vm",
 ]
@@ -44,7 +43,6 @@ node = { path = "node/node" }
 types = { path = "node/types" }
 config = { path = "node/config" }
 linker = { path = "node/linker" }
-api = { path = "node/api" }
 storage = { path = "node/storage" }
 vm = { path = "node/vm" }
 
