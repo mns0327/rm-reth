@@ -19,3 +19,4 @@ blake3.workspace = true
 num_enum.workspace = true
 async-trait.workspace = true
 tokio-rustls.workspace = true
+redb.workspace = true

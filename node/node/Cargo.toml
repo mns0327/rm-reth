@@ -5,18 +5,3 @@ edition.workspace = true
 
 [dependencies]
 types.workspace = true
-
-thiserror.workspace = true
-anyhow.workspace = true
-serde.workspace = true
-rustls.workspace = true
-tokio.workspace = true
-tokio-rustls.workspace = true
-figment.workspace = true
-webpki-roots.workspace = true
-clap.workspace = true
-clap_derive.workspace = true
-phf.workspace = true
-tracing.workspace = true
-tracing-subscriber.workspace = true
-async-trait.workspace = true

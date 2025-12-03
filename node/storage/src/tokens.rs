@@ -1,8 +1,11 @@
 use dashmap::DashMap;
 use once_cell::sync::Lazy;
+use redb::TableDefinition;
 use types::{Address, int::Uint256};
 
 const BALANCE_CACHE: Lazy<DashMap<Address, Uint256>> = Lazy::new(DashMap::new);
+
+const BALANCE_TABLE: TableDefinition<Address, Uint256> = TableDefinition::new("Balance Table");
 
 #[inline]
 pub fn balance_get(addr: &Address) -> Uint256 {

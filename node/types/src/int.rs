@@ -5,6 +5,7 @@ use std::{
 
 use alloy_primitives::ruint::UintTryFrom;
 use parity_scale_codec::{Decode, Encode};
+use redb::{TypeName, Value};
 use serde::{Deserialize, Serialize};
 
 #[repr(transparent)]
@@ -98,6 +99,13 @@ impl Default for Uint256 {
     }
 }
 
+impl AsRef<Uint256> for Uint256 {
+    #[inline]
+    fn as_ref(&self) -> &Uint256 {
+        &self
+    }
+}
+
 impl From<alloy_primitives::U256> for Uint256 {
     #[inline]
     fn from(v: alloy_primitives::U256) -> Self {
@@ -186,5 +194,38 @@ impl Decode for Uint256 {
 impl Display for Uint256 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl Value for Uint256 {
+    type SelfType<'a>
+        = Uint256
+    where
+        Self: 'a;
+    type AsBytes<'a>
+        = [u8; 32]
+    where
+        Self: 'a;
+
+    fn fixed_width() -> Option<usize> {
+        Some(32)
+    }
+
+    fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> Self::AsBytes<'a>
+    where
+        Self: 'b,
+    {
+        value.to_le_bytes()
+    }
+
+    fn from_bytes<'a>(data: &'a [u8]) -> Self::SelfType<'a>
+    where
+        Self: 'a,
+    {
+        Uint256::from_le_bytes(data.try_into().unwrap())
+    }
+
+    fn type_name() -> TypeName {
+        TypeName::new("Uint256")
     }
 }

@@ -43,6 +43,7 @@ impl<const N: usize> FixedBytes<N> {
 }
 
 impl<const N: usize> Default for FixedBytes<N> {
+    #[inline]
     fn default() -> Self {
         Self([u8::default(); N])
     }
