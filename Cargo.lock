@@ -866,6 +866,7 @@ name = "execute"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "once_cell",
  "storage",
  "types",
 ]
@@ -1297,6 +1298,7 @@ dependencies = [
 name = "node"
 version = "0.1.0"
 dependencies = [
+ "storage",
  "types",
 ]
 

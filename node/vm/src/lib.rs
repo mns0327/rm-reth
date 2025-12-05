@@ -8,15 +8,17 @@ enum State {
     Processed,
 }
 
-pub struct VmPool {
-    storage: StorageManager,
+pub struct VmPool<'a> {
+    storage: &'a StorageManager,
     state: State,
     tokens: HashMap<Address, Uint256>,
 }
 
-impl VmPool {
-    pub fn from_tx_pool(tx_pool: &[Transaction]) -> Result<Self, StorageError> {
-        let storage = StorageManager::new_default().unwrap();
+impl<'a> VmPool<'a> {
+    pub fn from_tx_pool(
+        storage: &'a StorageManager,
+        tx_pool: &[Transaction],
+    ) -> Result<Self, StorageError> {
         let balance_db = storage.get_ref(TableId::Balance).to_balance();
 
         let addresss_list: Vec<Address> = tx_pool.iter().flat_map(|tx| [tx.from, tx.to]).collect();
@@ -29,7 +31,7 @@ impl VmPool {
             .collect();
 
         Ok(Self {
-            storage: StorageManager::new_default().unwrap(),
+            storage,
             state: State::Initial,
             tokens: balance_map,
         })
@@ -85,7 +87,9 @@ impl VmPool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
+    use once_cell::sync::Lazy;
+
+    static STORAGE: Lazy<StorageManager> = Lazy::new(|| StorageManager::new_default().unwrap());
 
     fn addr(id: u8) -> Address {
         [id; 20].into()
@@ -106,16 +110,18 @@ mod tests {
 
     #[test]
     fn process_tx_moves_balance_on_success() {
+        STORAGE.init_table().unwrap();
+
         let a1 = addr(1);
         let a2 = addr(2);
 
-        let mut tokens: HashMap<Address, Uint256> = HashMap::new();
-        tokens.insert(a1, u(100));
-        tokens.insert(a2, u(50));
+        STORAGE
+            .balance_insert_items(vec![(a1, u(100)), (a2, u(50))])
+            .unwrap();
 
         let txs = vec![tx(a1, a2, 10)];
 
-        let mut pool = VmPool::from_tx_pool(&txs).unwrap();
+        let mut pool = VmPool::from_tx_pool(&STORAGE, &txs).unwrap();
 
         pool.process_tx(&txs);
 
@@ -125,16 +131,18 @@ mod tests {
 
     #[test]
     fn process_tx_skips_when_insufficient_balance() {
+        STORAGE.init_table().unwrap();
+
         let a1 = addr(1);
         let a2 = addr(2);
 
-        let mut tokens: HashMap<Address, Uint256> = HashMap::new();
-        tokens.insert(a1, u(100));
-        tokens.insert(a2, u(50));
+        STORAGE
+            .balance_insert_items(vec![(a1, u(100)), (a2, u(50))])
+            .unwrap();
 
         let txs = vec![tx(a1, a2, 200)];
 
-        let mut pool = VmPool::from_tx_pool(&txs).unwrap();
+        let mut pool = VmPool::from_tx_pool(&STORAGE, &txs).unwrap();
 
         pool.process_tx(&txs);
 
@@ -144,18 +152,19 @@ mod tests {
 
     #[test]
     fn process_tx_skips_later_tx_due_to_early_tx_balance_change() {
+        STORAGE.init_table().unwrap();
+
         let a1 = addr(1);
         let a2 = addr(2);
         let a3 = addr(3);
 
-        let mut tokens: HashMap<Address, Uint256> = HashMap::new();
-        tokens.insert(a1, u(50));
-        tokens.insert(a2, u(0));
-        tokens.insert(a3, u(0));
+        STORAGE
+            .balance_insert_items(vec![(a1, u(50)), (a2, u(0)), (a3, u(0))])
+            .unwrap();
 
         let txs = vec![tx(a1, a2, 40), tx(a1, a3, 20), tx(a2, a1, 20)];
 
-        let mut pool = VmPool::from_tx_pool(&txs).unwrap();
+        let mut pool = VmPool::from_tx_pool(&STORAGE, &txs).unwrap();
 
         pool.process_tx(&txs);
 
