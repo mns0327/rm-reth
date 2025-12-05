@@ -5,8 +5,10 @@ use std::{
 
 use alloy_primitives::ruint::UintTryFrom;
 use parity_scale_codec::{Decode, Encode};
-use redb::{TypeName, Value};
+use redb::TypeName;
 use serde::{Deserialize, Serialize};
+
+use crate::Value;
 
 #[repr(transparent)]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -197,7 +199,7 @@ impl Display for Uint256 {
     }
 }
 
-impl Value for Uint256 {
+impl redb::Value for Uint256 {
     type SelfType<'a>
         = Uint256
     where
@@ -229,3 +231,5 @@ impl Value for Uint256 {
         TypeName::new("Uint256")
     }
 }
+
+impl Value for Uint256 {}

@@ -1,41 +1,30 @@
-use std::{borrow::Borrow, marker::PhantomData, path::Path};
+use std::path::Path;
 
-use redb::{Database, Key, ReadableDatabase, TableDefinition, Value};
-use types::{Address, int::Uint256};
+use redb::Database;
 
-use crate::{error::StorageError, utils::Storage};
-
-const BALANCE_TABLE: TableDefinition<Address, Uint256> = TableDefinition::new("Balance Table");
+use crate::{
+    error::StorageError,
+    schema::{DbSchema, TableId},
+    tables::TableAccessor,
+};
 
 pub struct StorageManager {
+    schema: DbSchema,
     db: Database,
 }
 
 impl StorageManager {
+    pub fn get_ref(&self, table_id: TableId) -> TableAccessor<'_> {
+        self.schema.resolve(table_id).with_db(&self.db)
+    }
+
     pub fn new_default() -> Result<Self, StorageError> {
-        Self::create_or_open("node.redb")
+        Self::create_or_open("data/node.redb")
     }
 
     pub fn create_or_open<P: AsRef<Path>>(path: P) -> Result<Self, StorageError> {
         let db = Database::create(path)?;
-        Ok(Self { db })
-    }
-
-    #[inline]
-    pub fn balance_get(&self, addr: &Address) -> Result<Uint256, StorageError> {
-        Storage::get(&self.db, addr, BALANCE_TABLE)
-    }
-
-    #[inline]
-    pub fn balance_insert(&self, addr: Address, balance: Uint256) -> Result<(), StorageError> {
-        Storage::insert(&self.db, addr, balance, BALANCE_TABLE)
-    }
-
-    #[inline]
-    pub fn balance_update<F>(&self, addr: Address, f: F) -> Result<Uint256, StorageError>
-    where
-        F: FnOnce(Uint256) -> Uint256,
-    {
-        Storage::update(&self.db, addr, f, BALANCE_TABLE)
+        let schema = DbSchema::new();
+        Ok(Self { schema, db })
     }
 }

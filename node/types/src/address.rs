@@ -1,11 +1,11 @@
 use std::ops::{Deref, DerefMut};
 
 use parity_scale_codec::{Decode, Encode};
-use redb::{Key, TypeName, Value};
+use redb::TypeName;
 use serde::{Deserialize, Serialize};
 
 pub use crate::bytes::FixedBytes;
-use crate::token::TokenLinker;
+use crate::{Key, token::TokenLinker};
 
 #[repr(transparent)]
 #[derive(
@@ -67,7 +67,7 @@ impl Address {
     }
 }
 
-impl Value for Address {
+impl redb::Value for Address {
     type SelfType<'a>
         = Address
     where
@@ -101,8 +101,10 @@ impl Value for Address {
     }
 }
 
-impl Key for Address {
+impl redb::Key for Address {
     fn compare(data1: &[u8], data2: &[u8]) -> std::cmp::Ordering {
         data1.cmp(data2)
     }
 }
+
+impl Key for Address {}

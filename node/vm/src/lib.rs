@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use storage::tokens::{balance_get, balance_upsert};
+use storage::{StorageManager, TableId, error::StorageError};
 use types::{Address, int::Uint256, tx::transaction::Transaction};
 
 enum State {
@@ -9,25 +9,30 @@ enum State {
 }
 
 pub struct VmPool {
+    storage: StorageManager,
     state: State,
     tokens: HashMap<Address, Uint256>,
 }
 
 impl VmPool {
-    pub fn from_tx_pool(tx_pool: &[Transaction]) -> Self {
-        let mut balances = Vec::with_capacity(tx_pool.len() * 2);
+    pub fn from_tx_pool(tx_pool: &[Transaction]) -> Result<Self, StorageError> {
+        let storage = StorageManager::new_default().unwrap();
+        let balance_db = storage.get_ref(TableId::Balance).to_balance();
 
-        for tx in tx_pool {
-            balances.push((tx.from, balance_get(&tx.from)));
-            balances.push((tx.to, balance_get(&tx.to)));
-        }
+        let addresss_list: Vec<Address> = tx_pool.iter().flat_map(|tx| [tx.from, tx.to]).collect();
 
-        let balance_map = balances.into_iter().collect();
+        let balance_map = balance_db
+            .multi_get(&addresss_list)
+            .unwrap()
+            .into_iter()
+            .map(|(k, v)| (k.clone(), v))
+            .collect();
 
-        Self {
+        Ok(Self {
+            storage: StorageManager::new_default().unwrap(),
             state: State::Initial,
             tokens: balance_map,
-        }
+        })
     }
 
     pub fn process_tx(&mut self, tx_pool: &[Transaction]) {
@@ -68,10 +73,12 @@ impl VmPool {
         }
     }
 
-    pub fn update_to_cache(self) {
-        for (addr, balance) in self.tokens.into_iter() {
-            balance_upsert(addr, balance);
-        }
+    pub fn update_to_cache(self) -> Result<(), StorageError> {
+        let balance_db = self.storage.get_ref(TableId::Balance).to_balance();
+
+        balance_db.multi_insert(self.tokens)?;
+
+        Ok(())
     }
 }
 
@@ -106,12 +113,9 @@ mod tests {
         tokens.insert(a1, u(100));
         tokens.insert(a2, u(50));
 
-        let mut pool = VmPool {
-            state: State::Initial,
-            tokens,
-        };
-
         let txs = vec![tx(a1, a2, 10)];
+
+        let mut pool = VmPool::from_tx_pool(&txs).unwrap();
 
         pool.process_tx(&txs);
 
@@ -128,12 +132,9 @@ mod tests {
         tokens.insert(a1, u(100));
         tokens.insert(a2, u(50));
 
-        let mut pool = VmPool {
-            state: State::Initial,
-            tokens,
-        };
-
         let txs = vec![tx(a1, a2, 200)];
+
+        let mut pool = VmPool::from_tx_pool(&txs).unwrap();
 
         pool.process_tx(&txs);
 
@@ -152,12 +153,9 @@ mod tests {
         tokens.insert(a2, u(0));
         tokens.insert(a3, u(0));
 
-        let mut pool = VmPool {
-            state: State::Initial,
-            tokens,
-        };
-
         let txs = vec![tx(a1, a2, 40), tx(a1, a3, 20), tx(a2, a1, 20)];
+
+        let mut pool = VmPool::from_tx_pool(&txs).unwrap();
 
         pool.process_tx(&txs);
 
