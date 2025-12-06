@@ -8,8 +8,6 @@ use parity_scale_codec::{Decode, Encode};
 use redb::TypeName;
 use serde::{Deserialize, Serialize};
 
-use crate::Value;
-
 #[repr(transparent)]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Uint256(pub alloy_primitives::U256);
@@ -231,5 +229,3 @@ impl redb::Value for Uint256 {
         TypeName::new("Uint256")
     }
 }
-
-impl Value for Uint256 {}

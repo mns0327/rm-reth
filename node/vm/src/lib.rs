@@ -24,7 +24,7 @@ impl<'a> VmPool<'a> {
         let addresss_list: Vec<Address> = tx_pool.iter().flat_map(|tx| [tx.from, tx.to]).collect();
 
         let balance_map = balance_db
-            .multi_get(&addresss_list)
+            .multi_get_or_default(&addresss_list)
             .unwrap()
             .into_iter()
             .map(|(k, v)| (k.clone(), v))
@@ -78,7 +78,7 @@ impl<'a> VmPool<'a> {
     pub fn update_to_cache(self) -> Result<(), StorageError> {
         let balance_db = self.storage.get_ref(TableId::Balance).to_balance();
 
-        balance_db.multi_insert(self.tokens)?;
+        balance_db.multi_insert(self.tokens.iter().map(|(k, v)| (k, v)))?;
 
         Ok(())
     }
@@ -116,7 +116,7 @@ mod tests {
         let a2 = addr(2);
 
         STORAGE
-            .balance_insert_items(vec![(a1, u(100)), (a2, u(50))])
+            .balance_insert_items(vec![(a1, u(100)), (a2, u(50))].iter().map(|(k, v)| (k, v)))
             .unwrap();
 
         let txs = vec![tx(a1, a2, 10)];
@@ -137,7 +137,7 @@ mod tests {
         let a2 = addr(2);
 
         STORAGE
-            .balance_insert_items(vec![(a1, u(100)), (a2, u(50))])
+            .balance_insert_items(vec![(a1, u(100)), (a2, u(50))].iter().map(|(k, v)| (k, v)))
             .unwrap();
 
         let txs = vec![tx(a1, a2, 200)];
@@ -159,7 +159,7 @@ mod tests {
         let a3 = addr(3);
 
         STORAGE
-            .balance_insert_items(vec![(a1, u(50)), (a2, u(0)), (a3, u(0))])
+            .balance_insert_items(vec![(a1, u(50)), (a2, u(0))].iter().map(|(k, v)| (k, v)))
             .unwrap();
 
         let txs = vec![tx(a1, a2, 40), tx(a1, a3, 20), tx(a2, a1, 20)];

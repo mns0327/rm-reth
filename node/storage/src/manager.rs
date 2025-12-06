@@ -68,9 +68,9 @@ impl StorageManager {
         Ok(())
     }
 
-    pub fn balance_insert_items(
+    pub fn balance_insert_items<'a>(
         &self,
-        items: impl IntoIterator<Item = (Address, Uint256)>,
+        items: impl IntoIterator<Item = (&'a Address, &'a Uint256)>,
     ) -> Result<(), StorageError> {
         let balance_db = self.get_ref(TableId::Balance).to_balance();
 

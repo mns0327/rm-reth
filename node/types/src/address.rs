@@ -5,7 +5,7 @@ use redb::TypeName;
 use serde::{Deserialize, Serialize};
 
 pub use crate::bytes::FixedBytes;
-use crate::{Key, token::TokenLinker};
+use crate::token::TokenLinker;
 
 #[repr(transparent)]
 #[derive(
@@ -106,5 +106,3 @@ impl redb::Key for Address {
         data1.cmp(data2)
     }
 }
-
-impl Key for Address {}
