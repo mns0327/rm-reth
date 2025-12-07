@@ -12,8 +12,8 @@ use crate::tx::transaction::Transaction;
 pub struct TransactionQueue(Arc<ArrayQueue<Transaction>>);
 
 impl TransactionQueue {
-    pub fn new() -> Self {
-        Self(Arc::new(ArrayQueue::new(100)))
+    pub fn new(cap: usize) -> Self {
+        Self(Arc::new(ArrayQueue::new(cap)))
     }
 }
 

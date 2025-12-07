@@ -1,5 +1,8 @@
 use storage::{StorageManager, error::StorageError};
-use types::{block::block::Block, tx::{queue::TransactionQueue, transaction::Transaction}};
+use types::{
+    block::block::Block,
+    tx::{queue::TransactionQueue, transaction::Transaction},
+};
 use vm::VmPool;
 
 use std::mem;
@@ -7,8 +10,8 @@ use std::mem;
 pub struct NodeManager {
     storage: StorageManager,
     current_block: Box<Block>,
-    temporary_tx_queue: TransactionQueue,
-    max_temporary_tx_queue: usize
+    mempool: TransactionQueue,
+    max_mempool_size: usize,
 }
 
 impl NodeManager {
@@ -16,18 +19,18 @@ impl NodeManager {
         Self {
             storage: StorageManager::new_default().unwrap(),
             current_block: Box::new(Block::genesis()),
-            temporary_tx_queue: TransactionQueue::new(),
-            max_temporary_tx_queue: 100,
+            mempool: TransactionQueue::new(100),
+            max_mempool_size: 100,
         }
     }
 
     pub fn process_execution_transaction(&mut self) -> Result<(), StorageError> {
         let mut txs = Vec::with_capacity(100);
 
-        while let Some(tx) = self.temporary_tx_queue.pop() {
+        while let Some(tx) = self.mempool.pop() {
             txs.push(tx);
 
-            if txs.len() >= self.max_temporary_tx_queue {
+            if txs.len() >= self.max_mempool_size {
                 break;
             }
         }
@@ -46,19 +49,20 @@ impl NodeManager {
     pub fn finish_block(&mut self) -> Result<(), StorageError> {
         self.current_block.set_hash();
 
-        let next_block = Block::new()
-            .set_prev_hash(self.current_block.hash());
+        let next_block = Block::new().set_prev_hash(self.current_block.hash());
 
         let prev_block = mem::replace(&mut *self.current_block, next_block);
 
-        self.storage.get_ref(storage::TableId::Block).to_block()
+        self.storage
+            .get_ref(storage::TableId::Block)
+            .to_block()
             .insert(&prev_block.id(), &prev_block)?;
 
         Ok(())
     }
 
     #[inline]
-    pub async fn push_transaction(&mut self, tx: Transaction) -> Result<(), Transaction> {
-        self.temporary_tx_queue.push(tx)
+    pub fn push_transaction(&mut self, tx: Transaction) -> Result<(), Transaction> {
+        self.mempool.push(tx)
     }
 }
