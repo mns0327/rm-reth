@@ -1,5 +1,6 @@
 use crate::Address;
 use crate::block::error::BlockError;
+use crate::bytes::FixedBytes;
 use crate::int::Uint256;
 use crate::tx::transaction::Transaction;
 use crate::{hash::Hash, token::Balance};
@@ -52,7 +53,7 @@ impl Block {
         let header = Header {
             block_id: 0,
             prev_block: Hash::empty(),
-            extra_data: [0u8; 32],
+            extra_data: FixedBytes::default(),
         };
 
         let data = BlockData {
@@ -143,7 +144,7 @@ impl BlockInner {
 pub struct Header {
     pub block_id: u64,
     pub prev_block: Hash,
-    pub extra_data: [u8; 32],
+    pub extra_data: FixedBytes<32>,
 }
 
 impl Header {
@@ -151,7 +152,7 @@ impl Header {
         Self {
             block_id: 0,
             prev_block: Hash::empty(),
-            extra_data: [0u8; 32],
+            extra_data: FixedBytes::default(),
         }
     }
 }

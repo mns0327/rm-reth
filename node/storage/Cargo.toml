@@ -3,9 +3,14 @@ name = "storage"
 version.workspace = true
 edition.workspace = true
 
+[features]
+default = ["types"]
+json = ["types/json", "types"]
+
 [dependencies]
-types.workspace = true
+types = { workspace = true, optional = true }
 dashmap.workspace = true
 once_cell.workspace = true
 redb.workspace = true
 thiserror.workspace = true
+anyhow.workspace = true

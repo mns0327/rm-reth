@@ -11,7 +11,8 @@ enum State {
 pub struct VmPool<'a> {
     storage: &'a StorageManager,
     state: State,
-    tokens: HashMap<Address, Uint256>,
+    pub tx_pool: Vec<Transaction>,
+    pub tokens: HashMap<Address, Uint256>,
 }
 
 impl<'a> VmPool<'a> {
@@ -33,6 +34,7 @@ impl<'a> VmPool<'a> {
         Ok(Self {
             storage,
             state: State::Initial,
+            tx_pool: tx_pool.iter().cloned().collect(),
             tokens: balance_map,
         })
     }
@@ -75,7 +77,7 @@ impl<'a> VmPool<'a> {
         }
     }
 
-    pub fn update_to_cache(self) -> Result<(), StorageError> {
+    pub fn update_to_cache(&self) -> Result<(), StorageError> {
         let balance_db = self.storage.get_ref(TableId::Balance).to_balance();
 
         balance_db.multi_insert(self.tokens.iter().map(|(k, v)| (k, v)))?;

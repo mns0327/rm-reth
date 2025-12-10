@@ -23,6 +23,7 @@ codegen-units = 1
 members = [
     "bin/api-server",
     "bin/node-server",
+    "bin/db-utils",
     "node/host",
     "node/types",
     "node/node",

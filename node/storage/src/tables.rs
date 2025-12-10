@@ -203,7 +203,7 @@ where
 
     pub fn with_transaction<F, R>(&self, f: F) -> Result<R, StorageError>
     where
-        F: FnOnce(&mut redb::Table<'_, K, V>) -> Result<R, StorageError>,
+        F: FnOnce(&mut redb::Table<'_, K, V>) -> Result<R, anyhow::Error>,
     {
         let txn = self.db.begin_write()?;
 
@@ -219,18 +219,18 @@ where
             }
             Err(e) => {
                 drop(txn);
-                Err(e)
+                Err(StorageError::TransactionExecutionError(e.into()))
             }
         }
     }
 
     pub fn with_read_transaction<F, R>(&self, f: F) -> Result<R, StorageError>
     where
-        F: FnOnce(&redb::ReadOnlyTable<K, V>) -> Result<R, StorageError>,
+        F: FnOnce(&redb::ReadOnlyTable<K, V>) -> Result<R, anyhow::Error>,
     {
         let txn = self.db.begin_read()?;
         let table = txn.open_table(self.table)?;
-        f(&table)
+        f(&table).map_err(|e| StorageError::TransactionExecutionError(e.into()))
     }
 }
 

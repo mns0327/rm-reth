@@ -15,6 +15,9 @@ pub enum StorageError {
     #[error("commit error: {0}")]
     CommitError(#[from] redb::CommitError),
 
+    #[error("transaction execution error: {0}")]
+    TransactionExecutionError(#[source] anyhow::Error),
+
     #[error("other: {0}")]
     Other(String),
 }

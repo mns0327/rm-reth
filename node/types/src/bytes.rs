@@ -120,7 +120,20 @@ impl<const N: usize> Serialize for FixedBytes<N> {
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.0)
+        use faster_hex::hex_encode;
+        use std::str;
+
+        let mut hex_buf = vec![0u8; 2 * N];
+        hex_encode(&self.0, &mut hex_buf)
+            .expect("buffer length should be exactly 2 * N");
+
+        let mut s = String::with_capacity(2 * N + 2);
+        s.push_str("0x");
+
+        let hex_str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+        s.push_str(hex_str);
+
+        serializer.serialize_str(&s)
     }
 }
 
@@ -130,15 +143,24 @@ impl<'de, const N: usize> Deserialize<'de> for FixedBytes<N> {
     where
         D: Deserializer<'de>,
     {
-        let bytes = <&[u8]>::deserialize(deserializer)?;
-        if bytes.len() != N {
-            return Err(serde::de::Error::invalid_length(
-                bytes.len(),
-                &format!("expected {N} bytes").as_str(),
+        use faster_hex::hex_decode;
+        use serde::de::Error as DeError;
+
+        let s: &str = <&str>::deserialize(deserializer)?;
+
+        let s = s.strip_prefix("0x").unwrap_or(s);
+
+        if s.len() != 2 * N {
+            return Err(DeError::invalid_length(
+                s.len(),
+                &format!("expected 0x + {} hex chars ({} bytes)", 2 * N, N).as_str(),
             ));
         }
-        let mut arr = [0u8; N];
-        arr.copy_from_slice(bytes);
-        Ok(FixedBytes(arr))
+
+        let mut bytes = [0u8; N];
+        hex_decode(s.as_bytes(), &mut bytes)
+            .map_err(|e| DeError::custom(format!("hex decode error: {:?}", e)))?;
+
+        Ok(FixedBytes(bytes))
     }
 }
