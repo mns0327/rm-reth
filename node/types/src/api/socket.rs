@@ -1,9 +1,12 @@
 use parity_scale_codec::{Decode, Encode, Output};
-use serde::{Deserialize, Serialize};
 use std::net::{Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 
+#[cfg(feature = "json")]
+use serde::{Deserialize, Serialize};
+
 #[repr(transparent)]
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Copy)]
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Copy)]
 pub struct SocketAddrCodec(pub SocketAddr);
 
 impl From<SocketAddr> for SocketAddrCodec {

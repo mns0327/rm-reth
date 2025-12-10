@@ -8,7 +8,7 @@ use crossbeam::queue::ArrayQueue;
 use crate::tx::transaction::Transaction;
 
 #[repr(transparent)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TransactionQueue(Arc<ArrayQueue<Transaction>>);
 
 impl TransactionQueue {

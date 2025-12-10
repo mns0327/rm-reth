@@ -1,15 +1,18 @@
 use config::get_config;
 use parity_scale_codec::{Decode, Encode};
+
+#[cfg(feature = "json")]
 use serde::{Deserialize, Serialize};
 
 use crate::tx::{error::TransactionError, transaction::Transaction};
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
+#[derive(Debug, Encode, Decode, Clone, PartialEq)]
 pub struct TxPoolHelper {
     pub tx_count: u64,
     pub pool_size: u64,
-    #[serde(default)]
-    #[serde(skip_serializing, skip_deserializing)]
+    #[cfg_attr(feature = "json", serde(default))]
+    #[cfg_attr(feature = "json", serde(skip_serializing, skip_deserializing))]
     pub pool: Vec<Transaction>,
 }
 

@@ -2,12 +2,15 @@ use std::ops::{Deref, DerefMut};
 
 use parity_scale_codec::{Decode, Encode};
 use redb::TypeName;
-use serde::{Deserialize, Serialize};
 
 pub use crate::bytes::FixedBytes;
 use crate::token::TokenLinker;
 
+#[cfg(feature = "json")]
+use serde::{Deserialize, Serialize};
+
 #[repr(transparent)]
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
 #[derive(
     Debug,
     Clone,
@@ -17,13 +20,10 @@ use crate::token::TokenLinker;
     PartialOrd,
     Ord,
     Hash,
-    Serialize,
-    Deserialize,
     Encode,
     Decode,
     Default,
 )]
-
 pub struct Address(FixedBytes<20>);
 
 impl From<[u8; 20]> for Address {

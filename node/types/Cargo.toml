@@ -3,8 +3,12 @@ name = "types"
 version.workspace = true
 edition.workspace = true
 
+[features]
+default = []
+json = ["serde"]
+
 [dependencies]
-serde.workspace = true
+serde = { workspace = true, optional = true }
 parity-scale-codec.workspace = true
 alloy-primitives.workspace = true
 linker.workspace = true

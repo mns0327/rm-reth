@@ -1,10 +1,14 @@
-use parity_scale_codec::{Decode, Encode};
-use serde::{Deserialize, Serialize};
-
-use crate::api::socket::SocketAddrCodec;
 use std::collections::BTreeSet;
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
+use parity_scale_codec::{Decode, Encode};
+
+use crate::api::socket::SocketAddrCodec;
+
+#[cfg(feature = "json")]
+use serde::{Deserialize, Serialize};
+
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
+#[derive(Debug, Encode, Decode, Clone)]
 pub struct P2pPoints {
     pub peers: BTreeSet<SocketAddrCodec>,
 }

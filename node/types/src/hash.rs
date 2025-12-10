@@ -1,12 +1,15 @@
 use faster_hex::hex_encode;
 use parity_scale_codec::{Decode, Encode};
-use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Display},
     ops::Deref,
 };
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Encode, Decode, Default)]
+#[cfg(feature = "json")]
+use serde::{Deserialize, Serialize};
+
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Encode, Decode, Default)]
 pub struct Hash([u8; 32]);
 
 impl Deref for Hash {

@@ -1,10 +1,15 @@
+use crate::Address;
 use crate::block::error::BlockError;
+use crate::int::Uint256;
 use crate::tx::transaction::Transaction;
 use crate::{hash::Hash, token::Balance};
 
 use parity_scale_codec::{Decode, Encode};
+
+#[cfg(feature = "json")]
 use serde::{Deserialize, Serialize};
 
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Encode, Decode)]
 pub struct Block {
     pub block_hash: Hash,
@@ -18,6 +23,29 @@ impl Block {
             block_hash: Hash::empty(),
             _inner: BlockInner::new(Header::empty(), BlockData::new()),
         }
+    }
+
+    pub fn with_block_id(mut self, id: u64) -> Self {
+        self.header_mut().block_id = id;
+        self
+    }
+
+    pub fn with_prev_block_hash(mut self, prev_block_hash: Hash) -> Self {
+        self.header_mut().prev_block = prev_block_hash;
+        self
+    }
+
+    pub fn with_transactions(mut self, txs: &[Transaction]) -> Self {
+        self.data_mut().set_tx_pool(txs);
+        self
+    }
+
+    pub fn with_vm_processed<I>(mut self, items: I) -> Self
+    where
+        I: IntoIterator<Item = (Address, Uint256)>,
+    {
+        self.data_mut().set_vm_processed(items);
+        self
     }
 
     pub fn genesis() -> Self {
@@ -69,12 +97,12 @@ impl Block {
     }
 
     #[inline]
-    pub fn meta(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self._inner.header
     }
 
     #[inline]
-    pub fn meta_mut(&mut self) -> &mut Header {
+    pub fn header_mut(&mut self) -> &mut Header {
         &mut self._inner.header
     }
 
@@ -89,7 +117,9 @@ impl Block {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
+
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
+#[derive(Debug, Encode, Decode, Clone)]
 pub struct BlockInner {
     header: Header,
     data: BlockData,
@@ -107,7 +137,9 @@ impl BlockInner {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
+
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
+#[derive(Debug, Encode, Decode, Clone)]
 pub struct Header {
     pub block_id: u64,
     pub prev_block: Hash,
@@ -124,7 +156,9 @@ impl Header {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
+
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
+#[derive(Debug, Encode, Decode, Clone)]
 pub struct BlockData {
     pub tx_pool: Vec<Transaction>,
     // token holding amount (only contain changed address)
@@ -137,6 +171,20 @@ impl BlockData {
             tx_pool: vec![],
             tokens: vec![],
         }
+    }
+
+    pub fn set_tx_pool(&mut self, tx_pool: &[Transaction]) {
+        self.tx_pool = tx_pool.iter().cloned().collect();
+    }
+
+    pub fn set_vm_processed<I>(&mut self, items: I)
+    where
+        I: IntoIterator<Item = (Address, Uint256)>,
+    {
+        self.tokens = items
+            .into_iter()
+            .map(|(addr, amount)| Balance { addr, amount })
+            .collect();
     }
 
     // pub fn finish(&mut self) -> Result<(), BlockError> {

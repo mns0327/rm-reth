@@ -2,6 +2,8 @@ use core::fmt;
 use std::{borrow::Borrow, fmt::LowerHex};
 
 use parity_scale_codec::{Decode, Encode};
+
+#[cfg(feature = "json")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::error::TypeError;
@@ -111,6 +113,8 @@ impl<const N: usize> fmt::Display for FixedBytes<N> {
     }
 }
 
+
+#[cfg(feature = "json")]
 impl<const N: usize> Serialize for FixedBytes<N> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -120,6 +124,7 @@ impl<const N: usize> Serialize for FixedBytes<N> {
     }
 }
 
+#[cfg(feature = "json")]
 impl<'de, const N: usize> Deserialize<'de> for FixedBytes<N> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

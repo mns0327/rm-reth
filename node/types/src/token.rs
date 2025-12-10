@@ -2,13 +2,16 @@ use std::sync::{Arc, Weak};
 
 use linker::{InnerLinkerUtils, Linker, LinkerHolder};
 use parity_scale_codec::{Decode, Encode};
+
+#[cfg(feature = "json")]
 use serde::{Deserialize, Serialize};
 
 use crate::{Address, error::TypeError, int::Uint256};
 
 pub static TOKEN_HOLDER: LinkerHolder<Address, Balance> = LinkerHolder::new();
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode, PartialEq, Clone, Default)]
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
+#[derive(Debug, Encode, Decode, PartialEq, Clone, Default)]
 pub struct Balance {
     pub addr: Address,
     pub amount: Uint256,
