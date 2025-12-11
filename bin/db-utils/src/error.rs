@@ -6,7 +6,7 @@ pub enum DbUtilsError {
     Io(std::io::Error),
     Serialization(serde_json::Error),
     InvalidTable(String),
-    DatabaseNotFound(std::path::PathBuf),
+    // DatabaseNotFound(std::path::PathBuf),
 }
 
 impl fmt::Display for DbUtilsError {
@@ -16,9 +16,9 @@ impl fmt::Display for DbUtilsError {
             DbUtilsError::Io(e) => write!(f, "IO error: {}", e),
             DbUtilsError::Serialization(e) => write!(f, "JSON serialization error: {}", e),
             DbUtilsError::InvalidTable(table) => write!(f, "Invalid table name: {}", table),
-            DbUtilsError::DatabaseNotFound(path) => {
-                write!(f, "Database file not found: {}", path.display())
-            }
+            // DbUtilsError::DatabaseNotFound(path) => {
+            //     write!(f, "Database file not found: {}", path.display())
+            // }
         }
     }
 }

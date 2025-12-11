@@ -11,19 +11,7 @@ use serde::{Deserialize, Serialize};
 
 #[repr(transparent)]
 #[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    Encode,
-    Decode,
-    Default,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Encode, Decode, Default)]
 pub struct Address(FixedBytes<20>);
 
 impl From<[u8; 20]> for Address {

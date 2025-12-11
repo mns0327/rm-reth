@@ -2,11 +2,11 @@ mod cli;
 mod error;
 mod export;
 
-use cli::Cli;
 use clap::Parser;
+use cli::Cli;
 use error::Result;
-use storage::StorageManager;
 use std::fs;
+use storage::StorageManager;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();

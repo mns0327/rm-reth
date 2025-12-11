@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 #[repr(transparent)]
 #[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct Uint256(pub alloy_primitives::U256);
 
 impl Uint256 {

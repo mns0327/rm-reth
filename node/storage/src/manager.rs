@@ -36,6 +36,7 @@ impl StorageManager {
     pub fn create_tables(&self) -> Result<(), StorageError> {
         let txn = self.db.begin_write()?;
 
+        txn.open_table(self.schema.block)?;
         txn.open_table(self.schema.balance)?;
         txn.open_table(self.schema.nonce)?;
 
@@ -60,6 +61,7 @@ impl StorageManager {
     pub fn drop_tables(&self) -> Result<(), StorageError> {
         let txn = self.db.begin_write()?;
 
+        txn.delete_table(self.schema.block)?;
         txn.delete_table(self.schema.balance)?;
         txn.delete_table(self.schema.nonce)?;
 

@@ -26,6 +26,10 @@ impl Balance {
         }
     }
 
+    pub fn split(&self) -> (&Address, &Uint256) {
+        (&self.addr, &self.amount)
+    }
+
     #[inline]
     pub fn checked_sub_amount(self, rhs: Uint256) -> Option<Self> {
         self.amount.checked_sub(rhs).map(|new_amt| Self {

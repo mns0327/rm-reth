@@ -113,7 +113,6 @@ impl<const N: usize> fmt::Display for FixedBytes<N> {
     }
 }
 
-
 #[cfg(feature = "json")]
 impl<const N: usize> Serialize for FixedBytes<N> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -124,8 +123,7 @@ impl<const N: usize> Serialize for FixedBytes<N> {
         use std::str;
 
         let mut hex_buf = vec![0u8; 2 * N];
-        hex_encode(&self.0, &mut hex_buf)
-            .expect("buffer length should be exactly 2 * N");
+        hex_encode(&self.0, &mut hex_buf).expect("buffer length should be exactly 2 * N");
 
         let mut s = String::with_capacity(2 * N + 2);
         s.push_str("0x");

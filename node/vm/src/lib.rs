@@ -43,32 +43,41 @@ impl<'a> VmPool<'a> {
         match self.state {
             State::Initial => {
                 for tx in tx_pool.into_iter() {
-                    // check vaild tx
-                    let from_balance = match self
-                        .tokens
-                        .get(&tx.from)
-                        .unwrap()
-                        .clone()
-                        .checked_sub(tx.amount.clone())
-                    {
-                        Some(from_balance) => from_balance,
-                        None => continue,
-                    };
+                    if tx.from != tx.to {
+                        // check vaild tx
+                        let from_balance = match self
+                            .tokens
+                            .get(&tx.from)
+                            .unwrap()
+                            .clone()
+                            .checked_sub(tx.amount.clone())
+                        {
+                            Some(from_balance) => from_balance,
+                            None => continue,
+                        };
 
-                    let to_balance = match self
-                        .tokens
-                        .get(&tx.to)
-                        .unwrap()
-                        .clone()
-                        .checked_add(tx.amount.clone())
-                    {
-                        Some(to_balance) => to_balance,
-                        None => continue,
-                    };
+                        let to_balance = match self
+                            .tokens
+                            .get(&tx.to)
+                            .unwrap()
+                            .clone()
+                            .checked_add(tx.amount.clone())
+                        {
+                            Some(to_balance) => to_balance,
+                            None => continue,
+                        };
 
-                    // update balances
-                    self.tokens.insert(tx.from, from_balance);
-                    self.tokens.insert(tx.to, to_balance);
+                        // update balances
+                        self.tokens.insert(tx.from, from_balance);
+                        self.tokens.insert(tx.to, to_balance);
+                    } else {
+                        // check vaild tx
+                        let balance = self.tokens.get(&tx.from).unwrap().clone();
+
+                        if balance >= tx.amount {
+                            self.tokens.insert(tx.from, balance);
+                        }
+                    }
                 }
 
                 self.state = State::Processed;

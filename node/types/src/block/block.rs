@@ -118,7 +118,6 @@ impl Block {
     }
 }
 
-
 #[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
 #[derive(Debug, Encode, Decode, Clone)]
 pub struct BlockInner {
@@ -138,7 +137,6 @@ impl BlockInner {
     }
 }
 
-
 #[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
 #[derive(Debug, Encode, Decode, Clone)]
 pub struct Header {
@@ -156,7 +154,6 @@ impl Header {
         }
     }
 }
-
 
 #[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
 #[derive(Debug, Encode, Decode, Clone)]
