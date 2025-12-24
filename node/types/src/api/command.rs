@@ -1,6 +1,36 @@
+use std::sync::Arc;
+
+use async_trait::async_trait;
+use blake3::Hash;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use tokio::sync::Mutex;
+
+use crate::{
+    Address, api::stream::Stream, block::block::Block, int::Uint256, tx::transaction::Transaction,
+};
 
 pub const ERRORCODE: u8 = 255;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
+#[repr(u8)]
+pub enum NodeApiComand {
+    Hello = 1,
+    Bye = 2,
+    CustemApi = 3,
+    Done = 4,
+    Error = ERRORCODE,
+}
+
+#[async_trait]
+pub trait ApiHelper: Sized {
+    type Value;
+
+    fn from_byte(byte: u8) -> Option<Self>;
+
+    fn as_byte(self) -> u8;
+
+    async fn handler(&self, stream: Arc<Mutex<Stream>>, value: Self::Value) -> anyhow::Result<()>;
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
@@ -15,12 +45,12 @@ pub enum HostCommand {
 
 impl HostCommand {
     #[inline]
-    pub fn from_byte(byte: u8) -> Self {
+    fn from_byte(byte: u8) -> Self {
         Self::try_from(byte).unwrap_or(HostCommand::Error)
     }
 
     #[inline]
-    pub fn as_byte(self) -> u8 {
+    fn as_byte(self) -> u8 {
         self.into()
     }
 }

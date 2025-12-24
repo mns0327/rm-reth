@@ -1,16 +1,17 @@
 [package]
-name = "node"
+name = "dispatcher"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
 types.workspace = true
-storage.workspace = true
-vm.workspace = true
-thiserror.workspace = true
+tower.workspace = true
 anyhow.workspace = true
-arc-swap.workspace = true
+node.workspace = true
+storage.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
-tokio.workspace = true
 rand.workspace = true

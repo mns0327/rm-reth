@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, sync::Arc};
 
-use crate::api::stream::Stream;
+use crate::api::{command::ApiHelper, stream::Stream};
 use async_trait::async_trait;
 use tokio::sync::Mutex;
 use tracing::{debug, error};
@@ -12,6 +12,8 @@ where
 {
     async fn handle(&self, stream: Arc<Mutex<Stream>>, cmd: u8, value: T) -> Result<bool, E>;
 }
+
+type HandlerFn<T, E> = fn(&T) -> Result<(), E>;
 
 pub struct ApiHandlers<T, E, const N: usize = 32>(
     [Option<Box<dyn Handler<T, E> + Send + Sync>>; N],
@@ -29,12 +31,13 @@ where
     }
 }
 
-pub struct Dispatcher<T, U, E, const N: usize = 32> {
+pub struct Dispatcher<T, U, E, C: ApiHelper, const N: usize = 32> {
     handlers: ApiHandlers<T, E, N>,
+    api_command: PhantomData<C>,
     _unknown: PhantomData<U>,
 }
 
-impl<T, U, E> Dispatcher<T, U, E>
+impl<T, U, E, C: ApiHelper> Dispatcher<T, U, E, C>
 where
     U: Handler<T, E> + Default + Send + Sync + 'static,
     T: Send + Clone + 'static,
@@ -43,6 +46,7 @@ where
     pub fn new() -> Self {
         Self {
             handlers: ApiHandlers(std::array::from_fn(|_| None)),
+            api_command: PhantomData,
             _unknown: PhantomData,
         }
     }

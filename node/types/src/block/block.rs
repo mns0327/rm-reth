@@ -79,8 +79,13 @@ impl Block {
         self._inner.encode()
     }
 
+    #[inline]
+    pub fn get_hash(&self) -> Hash {
+        self._inner.get_hash()
+    }
+
     pub fn set_hash(&mut self) {
-        self.block_hash = self._inner.get_hash();
+        self.block_hash = self.get_hash();
     }
 
     pub fn update(&mut self, tx_pool: Vec<Transaction>) {

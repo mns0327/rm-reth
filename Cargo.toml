@@ -21,17 +21,18 @@ codegen-units = 1
 
 [workspace]
 members = [
-    "bin/api-server",
-    "bin/node-server",
+    # "bin/api-server",
+    # "bin/node-server",
     "bin/db-utils",
-    "node/host",
+    # "node/host",
     "node/types",
     "node/node",
     "node/config",
     "node/linker",
     "node/storage",
     "node/vm",
-    "node/api-handler",
+    "node/dispatcher",
+    # "node/api-handler",
 ]
 
 [workspace.package]
@@ -40,14 +41,15 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace.dependencies]
-host = { path = "node/host" }
+# host = { path = "node/host" }
 node = { path = "node/node" }
 types = { path = "node/types" }
 config = { path = "node/config" }
 linker = { path = "node/linker" }
 storage = { path = "node/storage" }
 vm = { path = "node/vm" }
-api-handler = { path = "node/api-handler" }
+dispatcher = { path = "node/dispatcher" }
+# api-handler = { path = "node/api-handler" }
 
 anyhow = "1.0.100"
 figment = { version = "0.10.19", features = ["yaml"] }
@@ -79,3 +81,7 @@ alloy-primitives = { version = "1.4.1", features = ["serde"] }
 once_cell = { version = "1.21.3" }
 redb = "3.1.0"
 crossbeam = "0.8.4"
+
+tower = { version = "0.5.2", features = ["full"] }
+tonic = "0.14.2"
+arc-swap = "1.7.1"

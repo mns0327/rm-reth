@@ -1,17 +1,23 @@
+pub mod command;
 pub mod error;
-pub mod manager;
-// pub mod mining;
+pub mod layers;
+pub mod service;
 
 #[cfg(test)]
 mod test {
-    use std::sync::Arc;
+    use std::{sync::Arc, time::Duration};
 
+    use node::manager::NodeManager;
     use rand::{Rng, SeedableRng, rngs::StdRng};
     use storage::StorageManager;
-    use tokio::time::{Duration, interval};
+    use tokio::time::interval;
+    use tower::ServiceExt;
     use types::{Address, int::Uint256, tx::transaction::Transaction};
 
-    use crate::{error::NodeError, manager::NodeManager};
+    use crate::{
+        command::Command,
+        service::{Dispatcher, DispatcherConfig, build_dispatcher},
+    };
 
     fn addr(id: u8) -> Address {
         [id; 20].into()
@@ -25,51 +31,44 @@ mod test {
 
         // Setup: Initialize a new blockchain with genesis block
         let node = Arc::new(NodeManager::genesis().unwrap());
+
         let addrs: Vec<Address> = (1..4).map(|v| addr(v)).collect();
 
         for addr in &addrs {
             node.mint(addr, &Uint256::from(1000000)).unwrap();
         }
 
-        // Act: Spawn task to mine and finalize blocks
-        let block_handle = {
-            let node = node.clone();
-            let mut ticker = interval(Duration::from_millis(100));
-            let mut rng = StdRng::from_os_rng();
+        let dispatcher = Dispatcher::new(node.clone());
 
-            let handle = tokio::spawn(async move {
-                for _ in 0..20 {
-                    ticker.tick().await;
-
-                    let tx_pool = node.process_execution_transaction()?;
-
-                    let block = node.create_block_with_processed_tx_pool(tx_pool);
-
-                    let mut extra_data = [0u8; 32];
-
-                    rng.fill(&mut extra_data);
-
-                    node.mine_with_block(block, extra_data.into())?;
-                }
-                Ok::<(), NodeError>(())
-            });
-
-            handle
+        let cfg = DispatcherConfig {
+            // concurrency_limit: 100,
+            timeout: Duration::from_secs(1),
         };
 
-        // Act: Spawn task to continuously add transactions to mempool
-        let mempool = node.mempool().clone();
+        let service = build_dispatcher(dispatcher, &cfg);
 
-        let tx_handle = {
-            let addrs = addrs.clone();
-            let mut ticker = interval(Duration::from_millis(2));
+        let mut mining_ticker = interval(Duration::from_millis(100));
+        let mut tx_submit_ticker = interval(Duration::from_millis(2));
 
-            let handle = tokio::spawn(async move {
-                let mut rng = StdRng::from_os_rng();
+        let mut rng = StdRng::from_os_rng();
 
-                for _ in 0..800 {
-                    ticker.tick().await;
+        let mut i = 0;
+        loop {
+            tokio::select! {
+                _ = mining_ticker.tick() => {
+                    if i >= 20 {
+                        break;
+                    }
 
+                    let mut extra_data = [0u8; 32];
+                    rng.fill(&mut extra_data);
+
+                    service.clone().oneshot(Command::MineBlock(extra_data.into())).await.unwrap();
+
+                    i += 1;
+                }
+
+                _ = tx_submit_ticker.tick() => {
                     let tx = Transaction::new(
                         addrs[rng.random_range(0..addrs.len())],
                         addrs[rng.random_range(0..addrs.len())],
@@ -77,15 +76,10 @@ mod test {
                         vec![],
                     );
 
-                    let _ = mempool.push(tx);
+                    service.clone().oneshot(Command::SubmitTx(tx)).await.unwrap();
                 }
-            });
-
-            handle
-        };
-
-        block_handle.await.unwrap().unwrap();
-        tx_handle.await.unwrap();
+            }
+        }
 
         // Verify: Check that blocks were mined correctly
         let current_height = node

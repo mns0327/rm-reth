@@ -25,3 +25,5 @@ async-trait.workspace = true
 tokio-rustls.workspace = true
 redb.workspace = true
 crossbeam.workspace = true
+anyhow.workspace = true
+dashmap.workspace = true

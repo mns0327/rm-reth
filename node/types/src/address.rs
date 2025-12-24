@@ -1,4 +1,7 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+    fmt,
+    ops::{Deref, DerefMut},
+};
 
 use parity_scale_codec::{Decode, Encode};
 use redb::TypeName;
@@ -11,7 +14,7 @@ use serde::{Deserialize, Serialize};
 
 #[repr(transparent)]
 #[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Encode, Decode, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Encode, Decode, Default)]
 pub struct Address(FixedBytes<20>);
 
 impl From<[u8; 20]> for Address {
@@ -92,5 +95,26 @@ impl redb::Value for Address {
 impl redb::Key for Address {
     fn compare(data1: &[u8], data2: &[u8]) -> std::cmp::Ordering {
         data1.cmp(data2)
+    }
+}
+
+impl fmt::Display for Address {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut out = [0u8; 40];
+
+        faster_hex::hex_encode(self.0.as_slice(), &mut out).map_err(|_| fmt::Error)?;
+
+        let s = unsafe { core::str::from_utf8_unchecked(&out) };
+
+        f.write_str("0x")?;
+        f.write_str(s)
+    }
+}
+
+impl fmt::Debug for Address {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("Address(")?;
+        fmt::Display::fmt(self, f)?;
+        f.write_str(")")
     }
 }

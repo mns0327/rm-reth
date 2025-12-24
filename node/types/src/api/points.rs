@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use parity_scale_codec::{Decode, Encode};
 
-use crate::api::socket::SocketAddrCodec;
+use crate::socket::SocketAddrCodec;
 
 #[cfg(feature = "json")]
 use serde::{Deserialize, Serialize};

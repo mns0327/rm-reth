@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub struct StorageManager {
-    schema: DbSchema,
+    schema: Box<DbSchema>,
     db: Database,
 }
 
@@ -24,7 +24,7 @@ impl StorageManager {
 
     pub fn create_or_open<P: AsRef<Path>>(path: P) -> Result<Self, StorageError> {
         let db = Database::create(path)?;
-        let schema = DbSchema::new();
+        let schema = Box::new(DbSchema::new());
 
         let manager = Self { schema, db };
 
