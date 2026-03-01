@@ -1,0 +1,16 @@
+[package]
+name = "storage"
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = ["rm-reth-types"]
+json = ["rm-reth-types/json", "rm-reth-types"]
+
+[dependencies]
+rm-reth-types = { workspace = true, optional = true }
+dashmap.workspace = true
+once_cell.workspace = true
+redb.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true

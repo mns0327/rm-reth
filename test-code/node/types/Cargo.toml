@@ -1,0 +1,30 @@
+[package]
+name = "rm-reth-types"
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = []
+json = ["serde"]
+
+[dependencies]
+serde = { workspace = true, optional = true }
+parity-scale-codec.workspace = true
+alloy-primitives.workspace = true
+linker.workspace = true
+thiserror.workspace = true
+config.workspace = true
+tokio.workspace = true
+rand.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+faster-hex.workspace = true
+blake3.workspace = true
+num_enum.workspace = true
+async-trait.workspace = true
+tokio-rustls.workspace = true
+redb.workspace = true
+crossbeam.workspace = true
+anyhow.workspace = true
+dashmap.workspace = true
+chrono.workspace = true

@@ -1,0 +1,17 @@
+[package]
+name = "dispatcher"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+rm-reth-types.workspace = true
+tower.workspace = true
+anyhow.workspace = true
+node.workspace = true
+storage.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+rand.workspace = true

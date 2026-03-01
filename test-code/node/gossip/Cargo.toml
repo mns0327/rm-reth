@@ -1,0 +1,11 @@
+[package]
+name = "rm-reth-gossip"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+rm-reth-types.workspace = true
+moka.workspace = true
+thiserror.workspace = true
+parity-scale-codec.workspace = true
+rand.workspace = true

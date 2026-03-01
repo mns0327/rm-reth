@@ -1,0 +1,12 @@
+[package]
+name = "vm"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+rm-reth-types.workspace = true
+storage.workspace = true
+anyhow.workspace = true
+
+[dev-dependencies]
+once_cell.workspace = true

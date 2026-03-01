@@ -1,0 +1,6 @@
+[package]
+name = "reth-network"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
