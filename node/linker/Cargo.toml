@@ -1,9 +1,0 @@
-[package]
-name = "linker"
-version.workspace = true
-edition.workspace = true
-
-[dependencies]
-dashmap.workspace = true
-serde.workspace = true
-parity-scale-codec.workspace = true
