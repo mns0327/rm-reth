@@ -33,3 +33,4 @@ edition = "2024"
 rm-reth-types = { path = "node/types" }
 tokio = { version = "1.49.0", features = ["full"] }
 anyhow = "1.0.102"
+thiserror = "2.0.18"
