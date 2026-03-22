@@ -1,5 +1,17 @@
 use tokio::sync::mpsc;
 
+/// Errors that can occur during command dispatch or response handling.
+#[derive(Debug)]
+pub enum CommanError {
+    /// The command channel's receiver was dropped before the command could be delivered.
+    /// This typically means the worker task has exited or panicked.
+    CommandRecvChannelClosed,
+
+    /// The response channel's receiver was dropped before the response could be delivered.
+    /// This typically means the caller cancelled or timed out while waiting for a response.
+    ResponseRecvChannelClosed,
+}
+
 /// A command that carries data of type `T` and can send back a response of type `R`.
 /// This implements a request-response pattern over async channels.
 pub struct Command<T, R> {
@@ -31,8 +43,11 @@ where
 
     /// Sends the response back to the original caller.
     /// Consumes `self` to enforce that a response is sent at most once.
-    pub async fn send_response(self, response: R) -> Result<(), anyhow::Error> {
-        self.awake_sender.send(response).await?;
+    pub async fn send_response(self, response: R) -> Result<(), CommanError> {
+        self.awake_sender
+            .send(response)
+            .await
+            .map_err(|_| CommanError::ResponseRecvChannelClosed)?;
         Ok(())
     }
 }
@@ -48,7 +63,7 @@ where
     fn send_command(
         &self,
         cmd: T,
-    ) -> impl std::future::Future<Output = Result<mpsc::Receiver<R>, anyhow::Error>> + Send;
+    ) -> impl std::future::Future<Output = Result<mpsc::Receiver<R>, CommanError>> + Send;
 }
 
 impl<T, R> CommandSenderExt<T, R> for mpsc::Sender<Command<T, R>>
@@ -58,9 +73,11 @@ where
 {
     /// Wraps `cmd` in a `Command`, sends it through the channel, and returns
     /// the `Receiver` end so the caller can `.recv()` the eventual response.
-    async fn send_command(&self, cmd: T) -> Result<mpsc::Receiver<R>, anyhow::Error> {
+    async fn send_command(&self, cmd: T) -> Result<mpsc::Receiver<R>, CommanError> {
         let (cmd, receiver) = Command::new(cmd);
-        self.send(cmd).await?;
+        self.send(cmd)
+            .await
+            .map_err(|_| CommanError::CommandRecvChannelClosed)?;
         Ok(receiver)
     }
 }
